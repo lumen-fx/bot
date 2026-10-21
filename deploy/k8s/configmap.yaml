@@ -1,0 +1,13 @@
+# Settings that are not secret. LUMENFX_DRY_RUN=1 logs every plan and writes
+# nothing to GitHub; set it to 0 to go live, then restart the deployment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lumenfx-bot
+  namespace: lumenfx-bot
+data:
+  LUMENFX_DRY_RUN: "1"
+  GITHUB_APP_SLUG: lumenfx-bot
+  PUBLIC_URL: https://bot.lumenfx.dev
+  WORKERS: "4"
+  RUST_LOG: info

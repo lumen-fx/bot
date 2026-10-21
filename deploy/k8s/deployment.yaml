@@ -1,0 +1,113 @@
+# One replica: the server receives webhooks, runs the workers and the timers
+# in one process. Workers serialize per thread through Postgres locks, so a
+# second replica would be safe, but one is the simplest correct start.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lumenfx-bot
+  namespace: lumenfx-bot
+  labels:
+    app.kubernetes.io/name: lumenfx-bot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lumenfx-bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lumenfx-bot
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:17
+          command:
+            - sh
+            - -c
+            - until pg_isready -h postgres -p 5432 -U lumenfx_bot; do sleep 2; done
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      containers:
+        - name: server
+          image: ghcr.io/lumen-fx/bot:main
+          # The tag moves, and Kubernetes defaults to Always only for :latest.
+          imagePullPolicy: Always
+          args: ["serve"]
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: lumenfx-bot
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lumenfx-bot-postgres
+                  key: DATABASE_URL
+            - name: GITHUB_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: lumenfx-bot-github
+                  key: GITHUB_APP_ID
+            - name: GITHUB_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: lumenfx-bot-github
+                  key: GITHUB_WEBHOOK_SECRET
+            - name: GITHUB_PRIVATE_KEY_FILE
+              value: /var/run/secrets/lumenfx-bot/private-key.pem
+          volumeMounts:
+            - name: github-key
+              mountPath: /var/run/secrets/lumenfx-bot
+              readOnly: true
+          # Liveness stays off the database; readiness checks it.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: github-key
+          secret:
+            secretName: lumenfx-bot-github
+            items:
+              - key: private-key.pem
+                path: private-key.pem
+            defaultMode: 0400
