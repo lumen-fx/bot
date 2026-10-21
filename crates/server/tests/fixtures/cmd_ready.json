@@ -1,0 +1,82 @@
+{
+  "description": "The author answers a change request in prose and runs ready: back to review, acknowledged with a reaction.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/pulls/562/reviews": [
+      {
+        "id": 1,
+        "user": {
+          "login": "FizzWizZleDazzle",
+          "id": 126825095,
+          "type": "User"
+        },
+        "state": "CHANGES_REQUESTED",
+        "submitted_at": "2026-10-21T23:00:00Z"
+      }
+    ],
+    "graphql:PullState#562": {
+      "repository": {
+        "pullRequest": {
+          "reviewThreads": {
+            "nodes": [
+              {
+                "isResolved": false,
+                "comments": {
+                  "nodes": [
+                    {
+                      "createdAt": "2026-10-21T23:00:00Z",
+                      "author": {
+                        "__typename": "User",
+                        "login": "FizzWizZleDazzle",
+                        "databaseId": 126825095
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 3
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request_review",
+        "action": "submitted",
+        "sender": "FizzWizZleDazzle"
+      }
+    },
+    {
+      "comment": {
+        "user": "newcomer",
+        "body": "The flag is renamed in the docs instead, see the reply above.\n\n@lumenfx-bot ready"
+      }
+    }
+  ]
+}

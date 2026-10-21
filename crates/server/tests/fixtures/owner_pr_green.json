@@ -1,0 +1,23 @@
+{
+  "description": "The recorded owner pull request, all checks green and queued, with its labels stripped: the bot adds the area and the review role, posts the docs advisory check, and no comment.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "labels": []
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "labels": []
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

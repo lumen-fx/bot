@@ -1,0 +1,15 @@
+{
+  "description": "An unknown command and a command from a later milestone get one reply that answers both.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot frobnicate\n@lumenfx-bot perf"
+      }
+    }
+  ]
+}

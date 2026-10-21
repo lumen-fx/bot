@@ -1,0 +1,66 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "author"
+    },
+    "blockers": [
+      "merge-commits"
+    ],
+    "rule": 4
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Waiting-On-Author"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Waiting-On-Author"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Needs-Review"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on author** (`S-Waiting-On-Author`)\n\nQueued in the merge queue.\n\nWhat is left:\n- [x] CLA signed\n- [ ] Merge commits: Commit `abcdef1` merges another branch into this one. The merge queue rebases, so rebase onto `main` instead of merging.\n- [x] No conflicts with `main`\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    }
+  ]
+}

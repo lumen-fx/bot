@@ -1,0 +1,35 @@
+{
+  "description": "A branch that merged main in: author role and the no-merges item in the status comment.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562/commits#append:": [
+      {
+        "sha": "abcdef1234567890abcdef1234567890abcdef12",
+        "parents": [
+          {
+            "sha": "a"
+          },
+          {
+            "sha": "b"
+          }
+        ],
+        "commit": {
+          "committer": {
+            "date": "2026-10-21T22:40:00Z"
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

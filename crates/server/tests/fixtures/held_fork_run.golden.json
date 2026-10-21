@@ -1,0 +1,39 @@
+{
+  "actions_log": [
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\nWelcome, and thank you for the pull request. This comment lists what is left before a maintainer reviews it, and the bot keeps it up to date as things change. A maintainer starts CI for a first pull request. How the project works is in [CONTRIBUTING.md](https://github.com/lumen-fx/lumen/blob/main/CONTRIBUTING.md).\n\n**Status: waiting on review** (`S-Needs-Review`)\n\nQueued in the merge queue.\n\nNothing is waiting on you.\n- [x] CLA signed\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 14 of 15 required green. CI for this push waits for a maintainer to approve the run.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    }
+  ]
+}

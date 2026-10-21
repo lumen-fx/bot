@@ -1,0 +1,122 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "A-Runtime",
+      "autolabel path",
+      false
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ],
+    [
+      "check-run",
+      "docs neutral",
+      "17.3 / 5",
+      false
+    ],
+    [
+      "status-edit",
+      "9000002",
+      "8.1",
+      false
+    ],
+    [
+      "reaction",
+      "7000004",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "check-run",
+      "docs success",
+      "17.3 / 5",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "S-Needs-Review",
+    "A-Runtime"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "A-Runtime"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\nWelcome, and thank you for the pull request. This comment lists what is left before a maintainer reviews it, and the bot keeps it up to date as things change. A maintainer starts CI for a first pull request. How the project works is in [CONTRIBUTING.md](https://github.com/lumen-fx/lumen/blob/main/CONTRIBUTING.md).\n\n**Status: waiting on review** (`S-Needs-Review`)\n\nQueued in the merge queue.\n\nNothing is waiting on you.\n- [x] CLA signed\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\nDocs: code changed and no doc page did. If users can observe this change, update its page.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        },
+        {
+          "body": {
+            "conclusion": "neutral",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "docs",
+            "output": {
+              "summary": "Code under the repository's code paths changed and no documentation page did. If users can observe this change, update its page in this pull request. A maintainer silences this with `@lumenfx-bot no-docs-needed`.",
+              "title": "Code changed and no doc did"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": [
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\nWelcome, and thank you for the pull request. This comment lists what is left before a maintainer reviews it, and the bot keeps it up to date as things change. A maintainer starts CI for a first pull request. How the project works is in [CONTRIBUTING.md](https://github.com/lumen-fx/lumen/blob/main/CONTRIBUTING.md).\n\n**Status: waiting on review** (`S-Needs-Review`)\n\nQueued in the merge queue.\n\nNothing is waiting on you.\n- [x] CLA signed\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "PATCH",
+          "path": "/repos/lumen-fx/lumen/issues/comments/9000002"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000004/reactions"
+        },
+        {
+          "body": {
+            "conclusion": "success",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "docs",
+            "output": {
+              "summary": "The docs advisory no longer applies to this pull request.",
+              "title": "No docs advisory"
+            },
+            "status": "completed"
+          },
+          "method": "PATCH",
+          "path": "/repos/lumen-fx/lumen/check-runs/9000003"
+        }
+      ]
+    }
+  ]
+}

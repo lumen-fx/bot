@@ -1,0 +1,61 @@
+{
+  "description": "Pullsift flags a first-time pull request: the bot changes no label and its status comment shrinks to the hold line.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "opened"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/pulls/562#append:labels": [
+            {
+              "name": "slop-suspect"
+            }
+          ],
+          "/repos/lumen-fx/lumen/issues/562#append:labels": [
+            {
+              "name": "slop-suspect"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "labeled",
+        "sender": "pullsift[bot]"
+      }
+    }
+  ]
+}

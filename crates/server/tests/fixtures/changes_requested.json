@@ -1,0 +1,128 @@
+{
+  "description": "A maintainer requests changes with one review thread. A push alone does not clear it while the thread is unanswered; the author's reply in the thread does.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/pulls/562/reviews": [
+      {
+        "id": 1,
+        "user": {
+          "login": "FizzWizZleDazzle",
+          "id": 126825095,
+          "type": "User"
+        },
+        "state": "CHANGES_REQUESTED",
+        "submitted_at": "2026-10-21T23:00:00Z"
+      }
+    ],
+    "graphql:PullState#562": {
+      "repository": {
+        "pullRequest": {
+          "reviewThreads": {
+            "nodes": [
+              {
+                "isResolved": false,
+                "comments": {
+                  "nodes": [
+                    {
+                      "createdAt": "2026-10-21T23:00:00Z",
+                      "author": {
+                        "__typename": "User",
+                        "login": "FizzWizZleDazzle",
+                        "databaseId": 126825095
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 3
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request_review",
+        "action": "submitted",
+        "sender": "FizzWizZleDazzle"
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "graphql:PullState#562": {
+            "repository": {
+              "pullRequest": {
+                "reviewThreads": {
+                  "nodes": [
+                    {
+                      "isResolved": false,
+                      "comments": {
+                        "nodes": [
+                          {
+                            "createdAt": "2026-10-21T23:00:00Z",
+                            "author": {
+                              "__typename": "User",
+                              "login": "FizzWizZleDazzle",
+                              "databaseId": 126825095
+                            }
+                          },
+                          {
+                            "createdAt": "2026-10-21T23:05:00Z",
+                            "author": {
+                              "__typename": "User",
+                              "login": "newcomer",
+                              "databaseId": 5001
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request_review_comment",
+        "action": "created",
+        "sender": "newcomer"
+      }
+    }
+  ]
+}

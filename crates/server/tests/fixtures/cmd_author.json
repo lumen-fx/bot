@@ -1,0 +1,34 @@
+{
+  "description": "A maintainer puts a green pull request on its author; someone without access cannot; the author's next push clears it.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "users": {
+    "rando": {
+      "id": 6001,
+      "permission": "read",
+      "merged_prs": 1
+    }
+  },
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot author"
+      }
+    },
+    {
+      "comment": {
+        "user": "rando",
+        "body": "@lumenfx-bot author"
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

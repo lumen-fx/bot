@@ -1,0 +1,28 @@
+{
+  "description": "A maintainer adds and removes labels; someone without access may set self-service labels only, and a missing label is refused.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "users": {
+    "rando": {
+      "id": 6001,
+      "permission": "read",
+      "merged_prs": 1
+    }
+  },
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot label +A-Text -C-Testing"
+      }
+    },
+    {
+      "comment": {
+        "user": "rando",
+        "body": "@lumenfx-bot label +O-Windows +P-High +O-Nonexistent"
+      }
+    }
+  ]
+}

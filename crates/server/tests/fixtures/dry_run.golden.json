@@ -1,0 +1,91 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      true
+    ],
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      true
+    ],
+    [
+      "reaction",
+      "7000003",
+      "7 acknowledge",
+      true
+    ],
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      true
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "author"
+    },
+    "blockers": [
+      "cla-unsigned"
+    ],
+    "rule": 4
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": []
+    },
+    {
+      "step": 1,
+      "writes": []
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "description": "Code changed and no doc did: a neutral docs check and a line in the status comment; no-docs-needed from a maintainer clears both.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      },
+      "labels": [
+        {
+          "name": "S-Needs-Review"
+        }
+      ]
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      },
+      "labels": [
+        {
+          "name": "S-Needs-Review"
+        }
+      ]
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "opened"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot no-docs-needed"
+      }
+    }
+  ]
+}

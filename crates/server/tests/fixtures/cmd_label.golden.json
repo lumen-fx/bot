@@ -1,0 +1,118 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "A-Text",
+      "command label",
+      false
+    ],
+    [
+      "label-remove",
+      "C-Testing",
+      "command label",
+      false
+    ],
+    [
+      "reaction",
+      "7000002",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "check-run",
+      "docs neutral",
+      "17.3 / 5",
+      false
+    ],
+    [
+      "label-add",
+      "O-Windows",
+      "command label",
+      false
+    ],
+    [
+      "comment",
+      "reply",
+      "8.2 reply",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "D-Modest",
+    "S-Needs-Review",
+    "A-Text",
+    "O-Windows"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "A-Text"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/C-Testing"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000002/reactions"
+        },
+        {
+          "body": {
+            "conclusion": "neutral",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "docs",
+            "output": {
+              "summary": "Code under the repository's code paths changed and no documentation page did. If users can observe this change, update its page in this pull request. A maintainer silences this with `@lumenfx-bot no-docs-needed`.",
+              "title": "Code changed and no doc did"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "O-Windows"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "body": "`label`: only a maintainer can change `P-High`; there is no label `O-Nonexistent` in this repository."
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "actions_log": [
+    [
+      "check-run",
+      "lumenfx config failure",
+      "17.3 / 5",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "conclusion": "failure",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "lumenfx config",
+            "output": {
+              "summary": "The edited `.github/lumenfx.toml` does not validate:\n\n- TOML parse error at line 2, column 1   | 2 | enabeld = true   | ^^^^^^^ unknown field 'enabeld', expected one of 'enabled', 'store', 'path', 'document', 'sentence', 'allow_ids' \n",
+              "title": "Config has 1 error(s)"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    }
+  ]
+}

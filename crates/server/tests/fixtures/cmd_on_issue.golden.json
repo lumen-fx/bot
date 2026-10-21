@@ -1,0 +1,85 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "A-Windowing",
+      "command label",
+      false
+    ],
+    [
+      "label-add",
+      "C-Feature",
+      "command label",
+      false
+    ],
+    [
+      "reaction",
+      "7000000",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "label-add",
+      "A-Text",
+      "command label",
+      false
+    ],
+    [
+      "comment",
+      "reply",
+      "8.2 reply",
+      false
+    ]
+  ],
+  "final_decision": null,
+  "final_labels": [
+    "A-Windowing",
+    "C-Feature",
+    "A-Text"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "A-Windowing",
+              "C-Feature"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/12/labels"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000000/reactions"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "A-Text"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/12/labels"
+        },
+        {
+          "body": {
+            "body": "`ready` works on pull requests only."
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/12/comments"
+        }
+      ]
+    }
+  ]
+}

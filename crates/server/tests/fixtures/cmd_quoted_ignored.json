@@ -1,0 +1,15 @@
+{
+  "description": "Commands in a quote, inline code, or a code block never run.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "> @lumenfx-bot author\n\nquoting that, and `@lumenfx-bot author` too\n\n```\n@lumenfx-bot author\n```"
+      }
+    }
+  ]
+}

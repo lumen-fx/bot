@@ -1,0 +1,63 @@
+{
+  "description": "A conflict on a pull request without a status comment is announced by the new status comment; after it clears and comes back, a separate conflict comment goes out once.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/pulls/562": {
+            "mergeable_state": "dirty",
+            "mergeable": false
+          }
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/pulls/562": {
+            "mergeable_state": "clean",
+            "mergeable": true
+          }
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/pulls/562": {
+            "mergeable_state": "dirty",
+            "mergeable": false
+          }
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

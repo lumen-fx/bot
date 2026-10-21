@@ -1,0 +1,64 @@
+{
+  "description": "A first-time contributor's runs wait for approval: the pull request waits on a maintainer, so it is in review, and the status comment says the run is held.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+      {
+        "id": 200000000000,
+        "name": "fmt",
+        "status": "queued",
+        "conclusion": null,
+        "app": {
+          "slug": "github-actions"
+        },
+        "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000000",
+        "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "output": {
+          "title": null,
+          "summary": null
+        }
+      }
+    ],
+    "/repos/lumen-fx/lumen/actions/runs?head_sha=2409434594939b851a82a98737422f3e4ceef08e&status=action_required": {
+      "workflow_runs": [
+        {
+          "id": 1,
+          "status": "completed",
+          "conclusion": "action_required"
+        }
+      ]
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "opened"
+      }
+    }
+  ]
+}

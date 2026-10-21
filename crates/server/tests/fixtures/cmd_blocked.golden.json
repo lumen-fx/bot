@@ -1,0 +1,134 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Blocked",
+      "command blocked",
+      false
+    ],
+    [
+      "reaction",
+      "7000002",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Blocked",
+      "blocking issue closed",
+      false
+    ],
+    [
+      "label-add",
+      "S-Blocked",
+      "command blocked",
+      false
+    ],
+    [
+      "reaction",
+      "7000005",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Blocked",
+      "command unblock",
+      false
+    ],
+    [
+      "reaction",
+      "7000007",
+      "7 acknowledge",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Blocked"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000002/reactions"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": []
+    },
+    {
+      "step": 2,
+      "writes": [
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Blocked"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Blocked"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000005/reactions"
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "writes": [
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Blocked"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000007/reactions"
+        }
+      ]
+    }
+  ]
+}
