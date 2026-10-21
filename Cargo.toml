@@ -1,0 +1,32 @@
+[workspace]
+resolver = "3"
+members = ["crates/engine", "crates/server"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+repository = "https://github.com/lumen-fx/bot"
+publish = false
+
+[workspace.dependencies]
+lumenfx-engine = { path = "crates/engine" }
+anyhow = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+globset = { version = "0.4", default-features = false }
+hex = "0.4"
+pulldown-cmark = { version = "0.13", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+toml = { version = "0.9", default-features = false, features = ["parse", "serde", "preserve_order"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+dbg_macro = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
