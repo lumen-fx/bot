@@ -26,7 +26,7 @@ GITHUB_TOKEN=$(gh auth token) cargo run --bin lumenfx-bot -- plan lumen-fx/lumen
 To run it for the organization:
 
 1. Register the App from `deploy/github-app/manifest.json` with `deploy/github-app/register.html`, and exchange the code GitHub returns with `gh api -X POST /app-manifests/CODE/conversions`.
-2. Create the two Secrets named in `deploy/k8s/kustomization.yaml` and apply it with `kubectl apply -k deploy/k8s`. The bot starts in dry run.
+2. Create the namespace and the two Secrets as `deploy/k8s/kustomization.yaml` describes, then `kubectl apply -k deploy/k8s`. The bot starts in dry run.
 3. Install the App on the repositories it should serve and commit a `.github/lumenfx.toml` to each; `examples/lumenfx.toml` is the one for lumen-fx/lumen.
 
 ## What it does

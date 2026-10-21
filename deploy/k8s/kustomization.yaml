@@ -3,8 +3,10 @@ kind: Kustomization
 
 # The bot on the registry's microk8s cluster, in its own namespace with its
 # own Postgres. Traffic arrives through a Cloudflare tunnel (bot.lumenfx.dev);
-# there is no Ingress. Two Secrets are created by hand and never committed:
+# there is no Ingress. Two Secrets are created by hand and never committed,
+# in the namespace, which therefore comes first:
 #
+#   kubectl apply -f deploy/k8s/namespace.yaml
 #   kubectl -n lumenfx-bot create secret generic lumenfx-bot-github \
 #     --from-literal=GITHUB_APP_ID=<app id> \
 #     --from-literal=GITHUB_WEBHOOK_SECRET=<webhook secret> \
