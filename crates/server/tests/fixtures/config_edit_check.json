@@ -1,0 +1,27 @@
+{
+  "description": "A pull request that edits .github/lumenfx.toml gets a lumenfx config check from the edited file.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562/files#append:": [
+      {
+        "filename": ".github/lumenfx.toml",
+        "status": "modified"
+      }
+    ],
+    "/repos/lumen-fx/lumen/contents/.github/lumenfx.toml?ref=2409434594939b851a82a98737422f3e4ceef08e": {
+      "sha": "cfg1",
+      "content": "W2NsYV0KZW5hYmVsZCA9IHRydWUK"
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

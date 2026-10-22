@@ -1,0 +1,33 @@
+{
+  "description": "Four help commands in a day: three replies, the fourth is held back by the per-thread cap.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot help"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot help"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot help"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot help"
+      }
+    }
+  ]
+}

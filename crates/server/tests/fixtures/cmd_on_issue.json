@@ -1,0 +1,41 @@
+{
+  "description": "Commands on an issue: label works, a pull-request-only command says so, and the issue gets no status comment or S- label.",
+  "world": "lumen-562",
+  "number": 12,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/issues/12": {
+      "number": 12,
+      "title": "Window API",
+      "state": "open",
+      "user": {
+        "login": "rando",
+        "id": 6001,
+        "type": "User"
+      },
+      "labels": []
+    }
+  },
+  "users": {
+    "rando": {
+      "id": 6001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot label +A-Windowing +C-Feature"
+      }
+    },
+    {
+      "comment": {
+        "user": "rando",
+        "body": "@lumenfx-bot ready\n@lumenfx-bot label +A-Text"
+      }
+    }
+  ]
+}

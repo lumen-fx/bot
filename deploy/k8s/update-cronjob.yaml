@@ -1,0 +1,90 @@
+# Daily update: the deployment tracks ghcr.io/lumen-fx/bot:main with
+# imagePullPolicy Always, so updating is a rollout restart. The server runs
+# its migrations at startup. For a rollout by hand:
+#   kubectl -n lumenfx-bot create job --from=cronjob/lumenfx-bot-update lumenfx-bot-update-manual-$(date +%s)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lumenfx-bot-updater
+  namespace: lumenfx-bot
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lumenfx-bot-updater
+  namespace: lumenfx-bot
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lumenfx-bot-updater
+  namespace: lumenfx-bot
+subjects:
+  - kind: ServiceAccount
+    name: lumenfx-bot-updater
+    namespace: lumenfx-bot
+roleRef:
+  kind: Role
+  name: lumenfx-bot-updater
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lumenfx-bot-update
+  namespace: lumenfx-bot
+spec:
+  schedule: "15 5 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: lumenfx-bot
+            app.kubernetes.io/component: update
+        spec:
+          serviceAccountName: lumenfx-bot-updater
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: update
+              image: alpine/k8s:1.32.13
+              env:
+                - name: HOME
+                  value: /tmp
+              command:
+                - sh
+                - -ec
+                - |
+                  kubectl -n lumenfx-bot rollout restart deployment/lumenfx-bot
+                  kubectl -n lumenfx-bot rollout status deployment/lumenfx-bot --timeout=600s
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

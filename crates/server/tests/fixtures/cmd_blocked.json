@@ -1,0 +1,57 @@
+{
+  "description": "blocked #12 adds the blocked label and freezes the S- handling; when #12 closes the bot lifts it. A bare blocked and unblock add and remove it by hand.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/issues/12": {
+      "number": 12,
+      "title": "Window API",
+      "state": "open",
+      "user": {
+        "login": "FizzWizZleDazzle",
+        "id": 126825095,
+        "type": "User"
+      },
+      "labels": []
+    }
+  },
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "Waiting on the window API.\n@lumenfx-bot blocked #12"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/issues/12": {
+            "state": "closed"
+          }
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "issues",
+        "action": "closed",
+        "sender": "FizzWizZleDazzle",
+        "number": 12
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot blocked"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot unblock"
+      }
+    }
+  ]
+}

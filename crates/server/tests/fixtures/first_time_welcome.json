@@ -1,0 +1,84 @@
+{
+  "description": "A first-time contributor with the CLA unsigned: author role, a status comment that opens with the welcome and the CLA sentence. Signing (the cla check turns green) edits the same comment and moves the pull request to review.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+      {
+        "id": 200000000000,
+        "name": "cla",
+        "status": "completed",
+        "conclusion": "failure",
+        "app": {
+          "slug": "github-actions"
+        },
+        "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000000",
+        "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "output": {
+          "title": null,
+          "summary": null
+        }
+      }
+    ]
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "opened"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+            {
+              "id": 200000000001,
+              "name": "cla",
+              "status": "completed",
+              "conclusion": "success",
+              "app": {
+                "slug": "github-actions"
+              },
+              "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000001",
+              "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+              "output": {
+                "title": null,
+                "summary": null
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

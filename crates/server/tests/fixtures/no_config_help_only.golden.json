@@ -1,0 +1,36 @@
+{
+  "actions_log": [
+    [
+      "comment",
+      "reply",
+      "8.2 reply",
+      false
+    ]
+  ],
+  "final_decision": null,
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": []
+    },
+    {
+      "step": 1,
+      "writes": [
+        {
+          "body": {
+            "body": "Every command starts with the mention, one per line: `@lumenfx-bot <command>`. A bare word such as `ready` does nothing.\n\n- `@lumenfx-bot help` (pull request, issue; anyone): Replies with this list.\n- `@lumenfx-bot ready` (pull request; author, maintainer): Marks requested changes as addressed and moves the pull request back to review. `review` is an alias.\n- `@lumenfx-bot author` (pull request; maintainer): Puts the pull request on the author until their next push or their `ready` command.\n- `@lumenfx-bot blocked [#N]` (pull request, issue; maintainer): Adds the blocked label. With #N, the bot removes it when #N closes.\n- `@lumenfx-bot unblock` (pull request, issue; maintainer): Removes the blocked label.\n- `@lumenfx-bot label +NAME -NAME ...` (pull request, issue; maintainer; anyone for the labels the repository opens to everyone): Adds and removes labels. Quote names with spaces: +\"good first issue\".\n- `@lumenfx-bot concern NAME` (pull request; maintainer): Raises a named concern; the pull request does not move to review while one is open.\n- `@lumenfx-bot resolve NAME` (pull request; maintainer): Resolves a concern.\n- `@lumenfx-bot no-docs-needed` (pull request; maintainer): Silences the docs advisory for this pull request.\n\nCommands inside code, quotes, or HTML are ignored. The full list is at https://bot.lumenfx.dev/help."
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    }
+  ]
+}

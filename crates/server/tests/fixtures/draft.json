@@ -1,0 +1,20 @@
+{
+  "description": "A draft is the author's: author role, and no status comment for a maintainer's draft.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "draft": true
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "converted_to_draft"
+      }
+    }
+  ]
+}

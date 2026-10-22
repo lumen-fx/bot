@@ -1,0 +1,20 @@
+{
+  "description": "No .github/lumenfx.toml on main: commands other than help do nothing, help is answered.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot author"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot help"
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<!--
+  Registers the lumenfx-bot GitHub App under the lumen-fx organization with
+  the permissions and events in manifest.json (GitHub's manifest flow). Open
+  this file in a browser signed in as an organization owner (serve the
+  directory with `python3 -m http.server` so the page can read
+  manifest.json, or paste the file into the box), check the
+  manifest, and press the button. GitHub then redirects to the manifest's
+  redirect_url with ?code=...; exchange that code within an hour:
+
+    gh api -X POST /app-manifests/CODE/conversions > app.json
+
+  app.json holds the App ID, the webhook secret, and the private key PEM.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>Register lumenfx-bot</title></head>
+<body>
+<form action="https://github.com/organizations/lumen-fx/settings/apps/new" method="post">
+  <p>Manifest (paste the contents of manifest.json if this box is empty):</p>
+  <textarea name="manifest" id="manifest" rows="30" cols="100"></textarea>
+  <p><button type="submit">Create the GitHub App on lumen-fx</button></p>
+</form>
+<script>
+  fetch("manifest.json").then(r => r.text()).then(t => {
+    document.getElementById("manifest").value = t;
+  }).catch(() => {});
+</script>
+</body>
+</html>

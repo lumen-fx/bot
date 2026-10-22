@@ -1,0 +1,74 @@
+# Nightly pg_dump to a volume of its own, keeping 14 days.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lumenfx-bot-backups
+  namespace: lumenfx-bot
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lumenfx-bot-backup
+  namespace: lumenfx-bot
+spec:
+  schedule: "30 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: lumenfx-bot
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: dump
+              image: postgres:17
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: lumenfx-bot-postgres
+                      key: DATABASE_URL
+              command:
+                - sh
+                - -ec
+                - |
+                  out=/backups/lumenfx-bot-$(date -u +%Y%m%dT%H%M%SZ).dump
+                  pg_dump --format=custom --file="$out" "$DATABASE_URL"
+                  find /backups -name 'lumenfx-bot-*.dump' -mtime +14 -delete
+                  ls -l /backups
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: lumenfx-bot-backups

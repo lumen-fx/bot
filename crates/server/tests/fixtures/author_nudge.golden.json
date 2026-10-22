@@ -1,0 +1,100 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ],
+    [
+      "comment",
+      "nudge",
+      "8.2 nudge",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "author"
+    },
+    "blockers": [
+      "red-check"
+    ],
+    "rule": 4
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Waiting-On-Author"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Waiting-On-Author"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Needs-Review"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on author** (`S-Waiting-On-Author`)\n\nQueued in the merge queue.\n\nWhat is left:\n- [x] CLA signed\n- [ ] `fmt` failed ([details](https://github.com/lumen-fx/lumen/actions/runs/200000000000)).\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 14 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": []
+    },
+    {
+      "step": 2,
+      "writes": []
+    },
+    {
+      "step": 3,
+      "writes": []
+    },
+    {
+      "step": 4,
+      "writes": [
+        {
+          "body": {
+            "body": "@newcomer, this pull request has been waiting on you for 15 days. What is left is in the [status comment](https://github.com/lumen-fx/lumen/pull/562#issuecomment-9000003). It stays open; push or reply when you pick it up."
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "writes": []
+    }
+  ]
+}

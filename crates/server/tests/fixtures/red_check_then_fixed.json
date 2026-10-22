@@ -1,0 +1,69 @@
+{
+  "description": "A required check fails on the owner's pull request: author role and a status comment naming the check. The fix (a green fmt run) edits the comment to nothing waiting and returns the role to review.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+            {
+              "id": 200000000000,
+              "name": "fmt",
+              "status": "completed",
+              "conclusion": "failure",
+              "app": {
+                "slug": "github-actions"
+              },
+              "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000000",
+              "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+              "output": {
+                "title": null,
+                "summary": null
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "check_run",
+        "action": "completed",
+        "sender": "github-actions[bot]"
+      }
+    },
+    {
+      "patch": {
+        "docs": {
+          "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+            {
+              "id": 200000000001,
+              "name": "fmt",
+              "status": "completed",
+              "conclusion": "success",
+              "app": {
+                "slug": "github-actions"
+              },
+              "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000001",
+              "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+              "output": {
+                "title": null,
+                "summary": null
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "check_suite",
+        "action": "completed",
+        "sender": "github-actions[bot]"
+      }
+    }
+  ]
+}

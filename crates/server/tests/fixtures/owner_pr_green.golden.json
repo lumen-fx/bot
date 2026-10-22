@@ -1,0 +1,65 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Needs-Review",
+      "9.2 rule 5",
+      false
+    ],
+    [
+      "label-add",
+      "A-Runtime",
+      "autolabel path",
+      false
+    ],
+    [
+      "check-run",
+      "docs neutral",
+      "17.3 / 5",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "S-Needs-Review",
+    "A-Runtime"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Needs-Review",
+              "A-Runtime"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "conclusion": "neutral",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "docs",
+            "output": {
+              "summary": "Code under the repository's code paths changed and no documentation page did. If users can observe this change, update its page in this pull request. A maintainer silences this with `@lumenfx-bot no-docs-needed`.",
+              "title": "Code changed and no doc did"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    }
+  ]
+}

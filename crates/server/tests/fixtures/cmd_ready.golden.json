@@ -1,0 +1,120 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Waiting-On-Author",
+      "9.2 rule 5",
+      false
+    ],
+    [
+      "label-add",
+      "S-Needs-Review",
+      "9.2 rule 5",
+      false
+    ],
+    [
+      "status-edit",
+      "9000003",
+      "8.1",
+      false
+    ],
+    [
+      "reaction",
+      "7000004",
+      "7 acknowledge",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Waiting-On-Author"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Needs-Review"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on author** (`S-Waiting-On-Author`)\n\nQueued in the merge queue.\n\nWhat is left:\n- [x] CLA signed\n- [ ] Changes requested by `FizzWizZleDazzle` are not addressed yet. Push the changes and reply to or resolve each review thread, or comment `@lumenfx-bot ready` once you have answered them.\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Needs-Review"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Waiting-On-Author"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on review** (`S-Needs-Review`)\n\nQueued in the merge queue.\n\nNothing is waiting on you.\n- [x] CLA signed\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "PATCH",
+          "path": "/repos/lumen-fx/lumen/issues/comments/9000003"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000004/reactions"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "name": "lumenfx-bot",
+  "url": "https://github.com/lumen-fx/bot",
+  "description": "Triage, labels and the status comment for lumen-fx pull requests and issues. Deterministic: every decision follows from GitHub state and the repository's .github/lumenfx.toml.",
+  "public": false,
+  "hook_attributes": {
+    "url": "https://bot.lumenfx.dev/github-hook",
+    "active": true
+  },
+  "redirect_url": "https://bot.lumenfx.dev/",
+  "default_permissions": {
+    "metadata": "read",
+    "issues": "write",
+    "pull_requests": "write",
+    "checks": "write",
+    "statuses": "read",
+    "actions": "write",
+    "deployments": "write",
+    "contents": "write",
+    "merge_queues": "write",
+    "security_events": "read"
+  },
+  "default_events": [
+    "pull_request",
+    "pull_request_review",
+    "pull_request_review_comment",
+    "pull_request_review_thread",
+    "issue_comment",
+    "issues",
+    "check_run",
+    "check_suite",
+    "status",
+    "workflow_run",
+    "workflow_job",
+    "merge_group",
+    "push",
+    "release",
+    "create",
+    "deployment_protection_rule"
+  ]
+}

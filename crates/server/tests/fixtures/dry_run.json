@@ -1,0 +1,62 @@
+{
+  "description": "Dry run: the same first-time pull request as first_time_welcome writes nothing to GitHub; the audit log records what it would have written.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "dry_run": true,
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+      {
+        "id": 200000000000,
+        "name": "cla",
+        "status": "completed",
+        "conclusion": "failure",
+        "app": {
+          "slug": "github-actions"
+        },
+        "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000000",
+        "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "output": {
+          "title": null,
+          "summary": null
+        }
+      }
+    ]
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 0
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "opened"
+      }
+    },
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot concern scope"
+      }
+    }
+  ]
+}

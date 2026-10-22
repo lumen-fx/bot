@@ -1,0 +1,51 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 3",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 3",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "author"
+    },
+    "blockers": [],
+    "rule": 3
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Waiting-On-Author"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Waiting-On-Author"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Needs-Review"
+        }
+      ]
+    }
+  ]
+}

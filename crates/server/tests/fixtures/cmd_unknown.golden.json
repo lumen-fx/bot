@@ -1,0 +1,39 @@
+{
+  "actions_log": [
+    [
+      "comment",
+      "reply",
+      "8.2 reply",
+      false
+    ]
+  ],
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "body": "Unknown command `frobnicate`. `@lumenfx-bot help` lists the commands.\n\n`perf` is not available yet. `@lumenfx-bot help` lists the commands that are."
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        }
+      ]
+    }
+  ]
+}

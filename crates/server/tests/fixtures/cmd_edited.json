@@ -1,0 +1,21 @@
+{
+  "description": "An edit that adds a command runs only the new one.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "steps": [
+    {
+      "comment": {
+        "user": "FizzWizZleDazzle",
+        "body": "@lumenfx-bot concern a"
+      }
+    },
+    {
+      "edit": {
+        "id": 7000002,
+        "body": "@lumenfx-bot concern a\n@lumenfx-bot help"
+      }
+    }
+  ]
+}
