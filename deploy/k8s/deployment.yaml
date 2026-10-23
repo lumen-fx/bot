@@ -24,6 +24,9 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 65532
+        # Mounted Secret files belong to root; this group gets read access
+        # through the 0440 mode below.
+        fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
       terminationGracePeriodSeconds: 30
@@ -110,4 +113,4 @@ spec:
             items:
               - key: private-key.pem
                 path: private-key.pem
-            defaultMode: 0400
+            defaultMode: 0440
