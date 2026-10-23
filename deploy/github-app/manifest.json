@@ -4,10 +4,10 @@
   "description": "Triage, labels and the status comment for lumen-fx pull requests and issues. Deterministic: every decision follows from GitHub state and the repository's .github/lumenfx.toml.",
   "public": false,
   "hook_attributes": {
-    "url": "https://bot.lumenfx.dev/github-hook",
+    "url": "https://hook.lumenfx.dev/github-hook",
     "active": true
   },
-  "redirect_url": "https://bot.lumenfx.dev/",
+  "redirect_url": "https://hook.lumenfx.dev/",
   "default_permissions": {
     "metadata": "read",
     "issues": "write",

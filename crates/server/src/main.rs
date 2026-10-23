@@ -95,7 +95,7 @@ async fn plan(args: &[String]) -> Result<()> {
     let bot = BotIdentity {
         login: format!("{slug}[bot]"),
         slug,
-        public_url: env_or("PUBLIC_URL", "https://bot.lumenfx.dev"),
+        public_url: env_or("PUBLIC_URL", "https://hook.lumenfx.dev"),
     };
     let snapshot = Builder {
         api: &api,
@@ -120,7 +120,7 @@ async fn serve() -> Result<()> {
     let bot = BotIdentity {
         login: format!("{slug}[bot]"),
         slug: slug.clone(),
-        public_url: env_or("PUBLIC_URL", "https://bot.lumenfx.dev"),
+        public_url: env_or("PUBLIC_URL", "https://hook.lumenfx.dev"),
     };
     let pool = db::connect(&env("DATABASE_URL")?).await?;
     db::migrate(&pool).await?;

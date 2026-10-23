@@ -8,6 +8,6 @@ metadata:
 data:
   LUMENFX_DRY_RUN: "1"
   GITHUB_APP_SLUG: lumenfx-bot
-  PUBLIC_URL: https://bot.lumenfx.dev
+  PUBLIC_URL: https://hook.lumenfx.dev
   WORKERS: "4"
   RUST_LOG: info

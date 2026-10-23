@@ -1,4 +1,4 @@
-# Cloudflare tunnel connector for bot.lumenfx.dev. The tunnel is
+# Cloudflare tunnel connector for hook.lumenfx.dev. The tunnel is
 # token-managed: its public hostname and the route to the lumenfx-bot Service
 # (http://lumenfx-bot.lumenfx-bot.svc.cluster.local) live in the Cloudflare
 # dashboard, and the token comes from the cloudflare-tunnel Secret.
