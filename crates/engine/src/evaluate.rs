@@ -8,10 +8,13 @@ use std::collections::BTreeSet;
 
 use chrono::{DateTime, Duration, Utc};
 
+use crate::cla::{self, CLA_CHECK, Requirement};
 use crate::command::{self, Arg, Command};
 use crate::config::Config;
-use crate::plan::{CheckRun, Job, LabelChange, NewComment, Plan, Reaction, StatusComment};
-use crate::snapshot::{Comment, EntityState, Item, PullRequest, ReviewState, Snapshot};
+use crate::plan::{
+    CheckRun, ClaSignature, Job, LabelChange, NewComment, Plan, Reaction, StatusComment,
+};
+use crate::snapshot::{ClaStore, Comment, EntityState, Item, PullRequest, ReviewState, Snapshot};
 use crate::state::{
     self, Blocker, CheckClass, CheckSet, Cla, Conflict, Decision, Inputs, Lifecycle, Role,
     RoleAction, RoleSet,
@@ -38,7 +41,10 @@ pub fn evaluate(s: &Snapshot) -> Plan {
         replies: Vec::new(),
         notices: Vec::new(),
         new_comments_budget: DAILY_COMMENT_CAP.saturating_sub(s.store.comments_last_day),
+        cla: None,
+        verdict: None,
     };
+    ev.cla = ev.cla_requirement();
     if let crate::snapshot::ConfigState::Invalid { errors, last_good } = &s.config {
         ev.plan.notes.push(format!(
             "config on the default branch does not validate ({} errors); {}",
@@ -89,6 +95,11 @@ struct Eval<'a> {
     /// Conflict and nudge comments, posted after replies.
     notices: Vec<NewComment>,
     new_comments_budget: u32,
+    /// Who must sign the CLA, for an open pull request in a gated
+    /// repository.
+    cla: Option<Requirement>,
+    /// The CLA verdict for this evaluation, once `cla_verdict` ran.
+    verdict: Option<cla::Verdict>,
 }
 
 enum Outcome {
@@ -127,6 +138,20 @@ impl<'a> Eval<'a> {
 
     fn is_pr(&self) -> bool {
         matches!(self.s.item, Item::Pr(_))
+    }
+
+    fn cla_requirement(&self) -> Option<Requirement> {
+        let cfg = self.cfg?;
+        match &self.s.item {
+            Item::Pr(pr) if cfg.raw.cla.enabled && pr.lifecycle == Lifecycle::Open => {
+                Some(cla::requirement(cfg, &pr.commits))
+            }
+            _ => None,
+        }
+    }
+
+    fn signed(&self, id: u64) -> bool {
+        matches!(&self.s.cla_store, ClaStore::Read(ids) if ids.contains(&id))
     }
 
     fn set_label(&mut self, label: &str, present: bool, rule: &str) {
@@ -325,6 +350,35 @@ impl<'a> Eval<'a> {
                 self.plan.state.no_docs_needed = true;
                 Outcome::Ack
             }
+            "sign" => {
+                if !self.is_pr() {
+                    return pr_only();
+                }
+                let (Some(cfg), Some(req)) = (self.cfg, &self.cla) else {
+                    return Outcome::Reply(templates::sign_not_gated());
+                };
+                if !cla::carries_sentence(cfg, cmd) {
+                    return Outcome::Reply(templates::sign_wrong_sentence(
+                        &slug,
+                        &cfg.raw.cla.sentence,
+                    ));
+                }
+                if !req.needs(c.user.id) {
+                    return Outcome::Reply(templates::sign_not_needed());
+                }
+                // The signature itself is planned from the comments by
+                // `cla_verdict`, so a store write that failed is tried again
+                // on the next evaluation.
+                Outcome::Ack
+            }
+            "recheck" => {
+                if !self.is_pr() {
+                    return pr_only();
+                }
+                // The snapshot read the store afresh because this command
+                // was waiting; the evaluation below does the rest.
+                Outcome::Ack
+            }
             other if templates::NOT_YET.contains(&other) => Outcome::Reply(format!(
                 "{} is not available yet. `@{slug} help` lists the commands that are.",
                 code(other)
@@ -402,7 +456,18 @@ impl<'a> Eval<'a> {
     fn pull_request(&mut self, pr: &PullRequest) {
         let cfg = self.cfg.expect("checked by caller");
         if pr.lifecycle != Lifecycle::Open {
-            self.plan.notes.push("closed: nothing to do".into());
+            if pr.lifecycle == Lifecycle::Merged
+                && cfg.raw.cla.enabled
+                && cfg.raw.cla.lock_after_merge
+                && !pr.locked
+            {
+                self.plan.lock = true;
+                self.plan
+                    .notes
+                    .push("merged: locking the conversation (cla.lock_after_merge)".into());
+            } else {
+                self.plan.notes.push("closed: nothing to do".into());
+            }
             return;
         }
         self.clear_finished_block();
@@ -414,21 +479,18 @@ impl<'a> Eval<'a> {
                 current.insert(r);
             }
         }
-        let cla = if !cfg.raw.cla.enabled || pr.author.is_bot {
-            Cla::Ok
-        } else {
-            match pr.cla_check {
-                Some(crate::snapshot::CheckState::Success) => Cla::Ok,
-                Some(crate::snapshot::CheckState::Failure) => Cla::Unsigned,
-                _ => Cla::Pending,
-            }
+        self.verdict = self.cla_verdict(cfg, pr);
+        let cla = match self.verdict.as_ref().map(|v| &v.state) {
+            None | Some(cla::State::Signed) => Cla::Ok,
+            Some(cla::State::Unsigned) => Cla::Unsigned,
+            Some(cla::State::Unknown(_)) => Cla::Pending,
         };
         let conflict = match pr.mergeable_state.as_deref() {
             Some("dirty") => Conflict::Dirty,
             None | Some("unknown") => Conflict::Unknown,
             Some(_) => Conflict::Clean,
         };
-        let checks: CheckSet = pr.checks.iter().map(|c| c.class).collect();
+        let checks: CheckSet = self.required_checks(cfg, pr).map(|c| c.class).collect();
         let (changes_requested, cr_by) = self.changes_requested(pr);
         let st = &self.plan.state;
         let author_command = st.author_forced_at.is_some_and(|t| {
@@ -479,9 +541,74 @@ impl<'a> Eval<'a> {
         if !held {
             self.conflict_notice(pr, conflict, creating_status);
             self.nudge(cfg, pr, &decision);
-            self.check_runs(cfg, pr);
         }
+        // The CLA gate reports even while Pullsift holds the pull request:
+        // a required check that never reports would hold it a second time.
+        self.check_runs(cfg, pr, held);
         self.plan.decision = Some(decision);
+    }
+
+    /// Required checks other than the ones this evaluation decides itself.
+    fn required_checks<'p>(
+        &self,
+        cfg: &Config,
+        pr: &'p PullRequest,
+    ) -> impl Iterator<Item = &'p crate::snapshot::RequiredCheck> {
+        let gated = cfg.raw.cla.enabled;
+        pr.checks
+            .iter()
+            .filter(move |c| !(gated && c.name == CLA_CHECK))
+    }
+
+    /// Plans the signatures that `sign` comments ask for and returns the
+    /// CLA verdict with them counted; `None` when the repository is not
+    /// gated.
+    fn cla_verdict(&mut self, cfg: &Config, pr: &PullRequest) -> Option<cla::Verdict> {
+        let req = self.cla.clone()?;
+        let mut signing = BTreeSet::new();
+        if matches!(self.s.cla_store, ClaStore::Read(_)) {
+            let mut comments: Vec<&Comment> = self.s.comments.iter().collect();
+            comments.sort_by_key(|c| (c.created_at, c.id));
+            for c in comments {
+                if self.is_bot_comment(c)
+                    || !req.needs(c.user.id)
+                    || self.signed(c.user.id)
+                    || signing.contains(&c.user.id)
+                {
+                    continue;
+                }
+                let signs = command::parse(&c.body, &self.s.bot.slug)
+                    .iter()
+                    .any(|cmd| cmd.name == "sign" && cla::carries_sentence(cfg, cmd));
+                if !signs {
+                    continue;
+                }
+                signing.insert(c.user.id);
+                self.plan.cla_signatures.push(ClaSignature {
+                    store: cfg.raw.cla.store.clone(),
+                    path: cfg.raw.cla.path.clone(),
+                    name: c.user.login.clone(),
+                    id: c.user.id,
+                    comment_id: c.id,
+                    created_at: c.created_at,
+                    repo: self.s.repo.clone(),
+                    repo_id: pr.repo_id,
+                    pull_request: self.s.number,
+                });
+                self.plan.notes.push(format!(
+                    "{} signs the CLA with comment {}",
+                    c.user.login, c.id
+                ));
+            }
+        }
+        let v = cla::verdict(&req, &self.s.cla_store, &signing);
+        self.plan.notes.push(format!(
+            "cla: {:?}, {} must sign, {} missing",
+            v.state,
+            req.signers.len(),
+            v.missing.len()
+        ));
+        Some(v)
     }
 
     /// Changes requested and not addressed (9.3.6), with the reviewers who
@@ -683,14 +810,8 @@ impl<'a> Eval<'a> {
             });
         }
         let base = pr.base_ref.as_str();
-        if cfg.raw.cla.enabled {
-            match i.cla {
-                Cla::Ok => v.items.push((true, "CLA signed".into())),
-                Cla::Unsigned => v.items.push((false, templates::item_cla_unsigned(cfg))),
-                Cla::Pending => v
-                    .items
-                    .push((false, "CLA: the check has not reported yet.".into())),
-            }
+        if let Some(verdict) = &self.verdict {
+            v.items.extend(templates::cla_items(cfg, verdict, &slug));
         }
         for b in &d.blockers {
             match b {
@@ -701,7 +822,10 @@ impl<'a> Eval<'a> {
                     templates::item_merge_commits(&pr.merge_commits, base),
                 )),
                 Blocker::RedCheck => {
-                    for c in pr.checks.iter().filter(|c| c.class == CheckClass::RedOwn) {
+                    for c in self
+                        .required_checks(cfg, pr)
+                        .filter(|c| c.class == CheckClass::RedOwn)
+                    {
                         v.items
                             .push((false, templates::item_red_check(&c.name, c.url.as_deref())));
                     }
@@ -729,10 +853,9 @@ impl<'a> Eval<'a> {
             .iter()
             .map(|(n, c)| (n.clone(), c.by.clone()))
             .collect();
-        let total = pr.checks.len();
-        let green = pr
-            .checks
-            .iter()
+        let total = self.required_checks(cfg, pr).count();
+        let green = self
+            .required_checks(cfg, pr)
             .filter(|c| c.class == CheckClass::Ok)
             .count();
         v.checks_line = if total == 0 {
@@ -740,7 +863,9 @@ impl<'a> Eval<'a> {
         } else {
             format!("Checks: {green} of {total} required green.")
         };
-        v.held_runs = pr.checks.iter().any(|c| c.class == CheckClass::Held);
+        v.held_runs = self
+            .required_checks(cfg, pr)
+            .any(|c| c.class == CheckClass::Held);
         v.coverage = pr.coverage.as_ref().map(|c| {
             let desc = templates::clean(&c.description);
             match &c.url {
@@ -863,39 +988,45 @@ impl<'a> Eval<'a> {
         self.plan.state.nudged_for = Some(last);
     }
 
-    fn check_runs(&mut self, cfg: &Config, pr: &PullRequest) {
+    fn check_runs(&mut self, cfg: &Config, pr: &PullRequest, held: bool) {
         let mut want = Vec::new();
-        if self.docs_advisory(cfg, pr) {
+        if let Some(v) = &self.verdict {
+            want.push(cla::check_run(cfg, v, &pr.head_sha, &self.s.bot.slug));
+        }
+        if !held && self.docs_advisory(cfg, pr) {
             want.push(CheckRun {
                 name: DOCS_CHECK.into(),
                 head_sha: pr.head_sha.clone(),
-                conclusion: "neutral".into(),
+                conclusion: Some("neutral".into()),
                 title: "Code changed and no doc did".into(),
                 summary: templates::docs_check_summary(&self.s.bot.slug),
             });
-        } else if pr
-            .own_checks
-            .get(DOCS_CHECK)
-            .is_some_and(|c| c.conclusion.as_deref() == Some("neutral"))
+        } else if !held
+            && pr
+                .own_checks
+                .get(DOCS_CHECK)
+                .is_some_and(|c| c.conclusion.as_deref() == Some("neutral"))
         {
             want.push(CheckRun {
                 name: DOCS_CHECK.into(),
                 head_sha: pr.head_sha.clone(),
-                conclusion: "success".into(),
+                conclusion: Some("success".into()),
                 title: "No docs advisory".into(),
                 summary: "The docs advisory no longer applies to this pull request.".into(),
             });
         }
-        if let Some(errors) = &pr.config_edit {
+        if let Some(errors) = pr.config_edit.as_ref().filter(|_| !held) {
             want.push(CheckRun {
                 name: CONFIG_CHECK.into(),
                 head_sha: pr.head_sha.clone(),
-                conclusion: if errors.is_empty() {
-                    "success"
-                } else {
-                    "failure"
-                }
-                .into(),
+                conclusion: Some(
+                    if errors.is_empty() {
+                        "success"
+                    } else {
+                        "failure"
+                    }
+                    .into(),
+                ),
                 title: if errors.is_empty() {
                     "Config is valid".into()
                 } else {
@@ -906,9 +1037,7 @@ impl<'a> Eval<'a> {
         }
         for w in want {
             let same = pr.own_checks.get(&w.name).is_some_and(|c| {
-                c.conclusion.as_deref() == Some(w.conclusion.as_str())
-                    && c.title == w.title
-                    && c.summary == w.summary
+                c.conclusion == w.conclusion && c.title == w.title && c.summary == w.summary
             });
             if !same {
                 self.plan.check_runs.push(w);

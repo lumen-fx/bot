@@ -1,0 +1,119 @@
+{
+  "description": "The store is edited by hand to add the author; the bot trusts its cache until `recheck` reads the store again, then the check passes.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "cla_store": {
+    "signedContributors": [
+      {
+        "name": "AeroForger",
+        "id": 313325032,
+        "comment_id": 5667357883,
+        "created_at": "2026-09-14T16:37:29Z",
+        "repoId": 1328973863,
+        "pullRequestNo": 355
+      }
+    ]
+  },
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/pulls/562/commits": [
+      {
+        "sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "parents": [
+          {
+            "sha": "85eeb55afdd90fb5c89a4d44410ffe38bde74b24"
+          }
+        ],
+        "commit": {
+          "author": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T19:48:54Z"
+          },
+          "committer": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T22:36:07Z"
+          },
+          "message": "fix: a change"
+        },
+        "author": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
+        },
+        "committer": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
+        }
+      }
+    ]
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 1
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "store": {
+        "file": {
+          "signedContributors": [
+            {
+              "name": "AeroForger",
+              "id": 313325032,
+              "comment_id": 5667357883,
+              "created_at": "2026-09-14T16:37:29Z",
+              "repoId": 1328973863,
+              "pullRequestNo": 355
+            },
+            {
+              "name": "newcomer",
+              "id": 5001,
+              "comment_id": 3,
+              "created_at": "2026-10-21T23:00:00Z",
+              "repoId": 1328973863,
+              "pullRequestNo": 562
+            }
+          ]
+        }
+      }
+    },
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "comment": {
+        "user": "newcomer",
+        "body": "@lumenfx-bot recheck"
+      }
+    }
+  ]
+}

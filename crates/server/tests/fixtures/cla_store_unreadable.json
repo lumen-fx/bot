@@ -1,0 +1,75 @@
+{
+  "description": "The store cannot be read: the cla check is published in progress, never failed, and the status comment says the bot will read it again.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "user": {
+        "login": "newcomer",
+        "id": 5001,
+        "type": "User"
+      }
+    },
+    "/repos/lumen-fx/lumen/pulls/562/commits": [
+      {
+        "sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "parents": [
+          {
+            "sha": "85eeb55afdd90fb5c89a4d44410ffe38bde74b24"
+          }
+        ],
+        "commit": {
+          "author": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T19:48:54Z"
+          },
+          "committer": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T22:36:07Z"
+          },
+          "message": "fix: a change"
+        },
+        "author": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
+        },
+        "committer": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
+        }
+      }
+    ],
+    "/repos/lumen-fx/cla-signatures/contents/signatures/v1/cla.json": {
+      "sha": "bad",
+      "content": "!!not base64!!"
+    }
+  },
+  "users": {
+    "newcomer": {
+      "id": 5001,
+      "permission": "read",
+      "merged_prs": 1
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    }
+  ]
+}

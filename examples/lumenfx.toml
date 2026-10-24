@@ -121,8 +121,9 @@ author_nudge_days = 14
 issue_info_nudge_days = 14
 close_after_days = 0
 
-# Until the bot signs CLAs itself, it reads the `cla` check the CLA workflow
-# publishes.
+# The `cla` check. Contributors sign with `@lumenfx-bot sign <sentence>`.
+# Bot accounts and the maintainers above never sign; allow_ids adds more
+# exemptions. candela carries `enabled = false`: no `cla` check there.
 [cla]
 enabled = true
 store = "lumen-fx/cla-signatures"
@@ -130,6 +131,7 @@ path = "signatures/v1/cla.json"
 document = "https://github.com/lumen-fx/lumen/blob/main/CLA.md"
 sentence = "I have read the CLA Document and I hereby sign the CLA"
 allow_ids = []
+lock_after_merge = true
 
 [migration]
 enabled = true

@@ -1,0 +1,57 @@
+{
+  "description": "The queued pull request passed cla on its head, so the merge group's cla check passes.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "cla_store": {
+    "signedContributors": [
+      {
+        "name": "AeroForger",
+        "id": 313325032,
+        "comment_id": 5667357883,
+        "created_at": "2026-09-14T16:37:29Z",
+        "repoId": 1328973863,
+        "pullRequestNo": 355
+      }
+    ]
+  },
+  "patch": {},
+  "users": {},
+  "graphql": {
+    "MergeQueue#null": {
+      "repository": {
+        "mergeQueue": {
+          "entries": {
+            "nodes": [
+              {
+                "position": 1,
+                "headCommit": {
+                  "oid": "group562"
+                },
+                "pullRequest": {
+                  "number": 562,
+                  "headRefOid": "2409434594939b851a82a98737422f3e4ceef08e"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "synchronize"
+      }
+    },
+    {
+      "deliver": {
+        "event": "merge_group",
+        "action": "checks_requested"
+      }
+    }
+  ]
+}

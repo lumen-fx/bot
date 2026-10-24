@@ -23,13 +23,14 @@ use sqlx::PgPool;
 use tokio::sync::Notify;
 use tower::ServiceExt;
 
-use lumenfx_bot::fake::{FakeGitHub, Write};
+use lumenfx_bot::fake::{FakeGitHub, Write, current_file, file_doc};
 use lumenfx_bot::web::{self, AppState};
 use lumenfx_bot::webhook::sign;
 use lumenfx_bot::worker::Worker;
 use lumenfx_engine::snapshot::BotIdentity;
 
 const SECRET: &[u8] = b"replay-secret";
+const STORE_FILE: &str = "/repos/lumen-fx/cla-signatures/contents/signatures/v1/cla.json";
 const SLUG: &str = "lumenfx-bot";
 
 #[derive(Deserialize)]
@@ -46,6 +47,12 @@ struct Fixture {
     config: Option<String>,
     #[serde(default)]
     dry_run: bool,
+    /// The CLA signature file in lumen-fx/cla-signatures; absent: no file.
+    #[serde(default)]
+    cla_store: Option<Value>,
+    /// Store writes that find another writer got there first.
+    #[serde(default)]
+    store_races: u32,
     /// JSON merge patches over world documents; `null` deletes a document.
     #[serde(default)]
     patch: BTreeMap<String, Value>,
@@ -91,6 +98,8 @@ enum Step {
     Edit { id: u64, body: String },
     /// Change documents between deliveries.
     Patch { docs: BTreeMap<String, Value> },
+    /// Replace the CLA signature file, as a hand edit of the store would.
+    Store { file: Value },
     /// Move the clock.
     Advance { hours: i64 },
     /// Fire the timers due at the current clock.
@@ -271,6 +280,19 @@ impl World {
                 });
                 p[event] = obj;
             }
+            "merge_group" => {
+                let pr = self
+                    .fake
+                    .doc(&format!("/repos/{}/pulls/{number}", self.repo))
+                    .unwrap();
+                let base = pr["base"]["sha"].as_str().unwrap_or("base");
+                p["merge_group"] = json!({
+                    "head_sha": format!("group{number}"),
+                    "head_ref": format!("refs/heads/gh-readonly-queue/main/pr-{number}-{base}"),
+                    "base_sha": base,
+                    "base_ref": "refs/heads/main",
+                });
+            }
             "status" => {
                 let pr = self
                     .fake
@@ -339,6 +361,10 @@ impl World {
                 self.deliver("issue_comment", p).await;
             }
             Step::Patch { docs } => self.apply_patches(docs),
+            Step::Store { file } => self.fake.set_doc(
+                STORE_FILE,
+                file_doc("edited", &serde_json::to_string_pretty(file).unwrap()),
+            ),
             Step::Advance { hours } => {
                 let mut c = self.clock.lock().unwrap();
                 *c += Duration::hours(*hours);
@@ -444,6 +470,13 @@ async fn run_fixture(pool: PgPool, name: &str) {
             json!({ "total_count": u.merged_prs, "items": [] }),
         );
     }
+    if let Some(file) = &fx.cla_store {
+        w.fake.set_doc(
+            STORE_FILE,
+            file_doc("store0", &serde_json::to_string_pretty(file).unwrap()),
+        );
+    }
+    w.fake.race_store_writes(fx.store_races);
     w.apply_patches(&fx.patch);
 
     let mut steps_out = Vec::new();
@@ -486,12 +519,15 @@ async fn run_fixture(pool: PgPool, name: &str) {
             .fetch_all(&pool)
             .await
             .unwrap();
-    let got = json!({
+    let mut got = json!({
         "steps": steps_out,
         "final_labels": labels,
         "final_decision": plan.decision,
         "actions_log": log,
     });
+    if let Some(doc) = w.fake.doc(STORE_FILE) {
+        got["final_cla_store"] = current_file(Some(&doc));
+    }
 
     let golden = dir.join(format!("{name}.golden.json"));
     let text = serde_json::to_string_pretty(&got).unwrap() + "\n";
@@ -559,4 +595,18 @@ replay! {
     draft,
     held_fork_run,
     dry_run,
+    cla_all_signed,
+    cla_unsigned_author,
+    cla_unsigned_trailer,
+    cla_unlinked_email,
+    cla_sign,
+    cla_sign_stranger,
+    cla_store_race,
+    cla_dry_run,
+    cla_recheck,
+    cla_store_unreadable,
+    cla_merge_group_pass,
+    cla_merge_group_fail,
+    cla_lock_after_merge,
+    cla_ungated,
 }

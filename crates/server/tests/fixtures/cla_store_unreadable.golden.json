@@ -1,0 +1,48 @@
+{
+  "actions_log": [
+    [
+      "check-run",
+      "cla in_progress",
+      "11.4",
+      false
+    ]
+  ],
+  "final_cla_store": {
+    "signedContributors": []
+  },
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 6
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "cla",
+            "output": {
+              "summary": "The signature store could not be read (the signature file is not base64). The bot reads it again on the next change, or on `@lumenfx-bot recheck`.\n",
+              "title": "Waiting for the signature store"
+            },
+            "status": "in_progress"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    }
+  ]
+}

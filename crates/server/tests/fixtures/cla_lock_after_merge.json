@@ -1,0 +1,26 @@
+{
+  "description": "A merged pull request in a repository with cla.lock_after_merge gets its conversation locked, once.",
+  "world": "lumen-562",
+  "number": 562,
+  "now": "2026-10-21T23:10:00Z",
+  "config": "example",
+  "patch": {
+    "/repos/lumen-fx/lumen/pulls/562": {
+      "state": "closed",
+      "merged": true,
+      "merged_at": "2026-10-21T23:05:00Z"
+    },
+    "/repos/lumen-fx/lumen/issues/562": {
+      "state": "closed"
+    }
+  },
+  "users": {},
+  "steps": [
+    {
+      "deliver": {
+        "event": "pull_request",
+        "action": "closed"
+      }
+    }
+  ]
+}

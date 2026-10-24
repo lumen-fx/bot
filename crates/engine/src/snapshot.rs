@@ -27,7 +27,21 @@ pub struct Snapshot {
     pub repo_labels: Option<BTreeSet<String>>,
     /// Whether the issue named by `blocked #N` is closed, when one is named.
     pub blocked_target_closed: Option<bool>,
+    /// The CLA signature store, read for open pull requests in gated
+    /// repositories.
+    pub cla_store: ClaStore,
     pub store: Stored,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum ClaStore {
+    /// Not needed for this evaluation.
+    #[default]
+    NotRead,
+    /// Reading it failed; the CLA verdict waits.
+    Unreadable(String),
+    /// The numeric IDs of everyone who signed.
+    Read(BTreeSet<u64>),
 }
 
 #[derive(Debug, Clone)]
@@ -115,15 +129,19 @@ pub struct PullRequest {
     pub head_sha: String,
     pub base_ref: String,
     pub default_branch: String,
+    /// The numeric ID of the base repository.
+    pub repo_id: u64,
+    /// The conversation is locked.
+    pub locked: bool,
     /// `mergeable_state`: "dirty" is a conflict; `None` while GitHub computes.
     pub mergeable_state: Option<String>,
     pub labels: BTreeSet<String>,
     pub files: Vec<String>,
     /// Short SHAs of commits with more than one parent.
     pub merge_commits: Vec<String>,
+    /// Every commit on the pull request, with the people it names.
+    pub commits: Vec<CommitFacts>,
     pub checks: Vec<RequiredCheck>,
-    /// The `cla` check on the head, as published by whatever posts it.
-    pub cla_check: Option<CheckState>,
     /// The `codecov/patch` commit status on the head.
     pub coverage: Option<StatusFacts>,
     pub reviews: Vec<Review>,
@@ -137,6 +155,23 @@ pub struct PullRequest {
     /// Set when the pull request edits the config file: the errors of the
     /// edited version (empty when it is valid).
     pub config_edit: Option<Vec<String>>,
+}
+
+/// Someone a commit names: the name written in the commit, and the GitHub
+/// account its email resolves to, if any.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Person {
+    pub name: String,
+    pub account: Option<UserRef>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CommitFacts {
+    pub sha: String,
+    pub author: Person,
+    pub committer: Person,
+    /// `Co-authored-by:` trailers.
+    pub co_authors: Vec<Person>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

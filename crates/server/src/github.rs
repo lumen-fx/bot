@@ -69,6 +69,9 @@ pub trait Api: Send + Sync {
 pub trait ApiFactory: Send + Sync + 'static {
     type Api: Api + 'static;
     fn for_installation(&self, installation_id: u64) -> Self::Api;
+    /// An [`Api`] that may write the contents of one repository (`owner/name`)
+    /// and nothing else: the CLA signature store.
+    fn for_store(&self, installation_id: u64, repo: &str) -> Self::Api;
     /// Installations and their repositories, for the reconcile sweep.
     fn installations(&self) -> impl Future<Output = Result<Vec<(u64, Vec<String>)>>> + Send;
 }
@@ -80,13 +83,16 @@ struct AppClaims {
     iss: String,
 }
 
+/// An installation, and the repository a store writer's token is limited to.
+type TokenKey = (u64, Option<String>);
+
 /// The App's credentials and a cache of installation tokens.
 pub struct App {
     pub app_id: String,
     key: EncodingKey,
     http: reqwest::Client,
     base: String,
-    tokens: Mutex<HashMap<u64, (String, DateTime<Utc>)>>,
+    tokens: Mutex<HashMap<TokenKey, (String, DateTime<Utc>)>>,
     /// x-ratelimit-remaining by installation, from the last response.
     pub rate: Mutex<HashMap<u64, i64>>,
 }
@@ -136,12 +142,26 @@ impl App {
         })
     }
 
-    async fn token(&self, installation_id: u64) -> Result<String> {
-        if let Some((t, exp)) = self.tokens.lock().unwrap().get(&installation_id)
+    /// The CLA store writer's token: contents write on the store only.
+    fn store_request(repo: &str) -> Value {
+        let name = repo.rsplit('/').next().unwrap_or(repo);
+        json!({
+            "repositories": [name],
+            "permissions": { "contents": "write", "metadata": "read" },
+        })
+    }
+
+    async fn token(&self, installation_id: u64, scope: Option<&str>) -> Result<String> {
+        let key = (installation_id, scope.map(String::from));
+        if let Some((t, exp)) = self.tokens.lock().unwrap().get(&key)
             && *exp > Utc::now() + chrono::Duration::minutes(5)
         {
             return Ok(t.clone());
         }
+        let request = match scope {
+            Some(repo) => Self::store_request(repo),
+            None => json!({ "permissions": Self::worker_permissions() }),
+        };
         let url = format!(
             "{}/app/installations/{installation_id}/access_tokens",
             self.base
@@ -151,7 +171,7 @@ impl App {
             .post(url)
             .bearer_auth(self.jwt()?)
             .header("Accept", "application/vnd.github+json")
-            .json(&json!({ "permissions": Self::worker_permissions() }))
+            .json(&request)
             .send()
             .await?;
         let v: Value = check(resp).await?;
@@ -167,7 +187,7 @@ impl App {
         self.tokens
             .lock()
             .unwrap()
-            .insert(installation_id, (token.clone(), exp));
+            .insert(key, (token.clone(), exp));
         Ok(token)
     }
 
@@ -251,6 +271,8 @@ fn extend(out: &mut Vec<Value>, v: Value, field: Option<&str>) {
 pub struct RestApi {
     app: Arc<App>,
     installation_id: u64,
+    /// Set for the store writer: the repository its token is limited to.
+    scope: Option<String>,
 }
 
 impl RestApi {
@@ -274,7 +296,10 @@ impl RestApi {
         url: &str,
         body: Option<&Value>,
     ) -> Result<(Value, Option<String>)> {
-        let token = self.app.token(self.installation_id).await?;
+        let token = self
+            .app
+            .token(self.installation_id, self.scope.as_deref())
+            .await?;
         let mut req = self
             .app
             .http
@@ -350,6 +375,15 @@ impl ApiFactory for Arc<App> {
         RestApi {
             app: self.clone(),
             installation_id,
+            scope: None,
+        }
+    }
+
+    fn for_store(&self, installation_id: u64, repo: &str) -> RestApi {
+        RestApi {
+            app: self.clone(),
+            installation_id,
+            scope: Some(repo.to_string()),
         }
     }
 
@@ -361,7 +395,7 @@ impl ApiFactory for Arc<App> {
         let mut out = Vec::new();
         for i in installs {
             let Some(id) = i["id"].as_u64() else { continue };
-            let token = self.token(id).await?;
+            let token = self.token(id, None).await?;
             let repos = self
                 .app_get_all(
                     "/installation/repositories?per_page=100",

@@ -20,6 +20,16 @@
           "committer": {
             "date": "2026-10-21T22:40:00Z"
           }
+        },
+        "author": {
+          "login": "FizzWizZleDazzle",
+          "id": 126825095,
+          "type": "User"
+        },
+        "committer": {
+          "login": "FizzWizZleDazzle",
+          "id": 126825095,
+          "type": "User"
         }
       }
     ]

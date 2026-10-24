@@ -2,6 +2,7 @@
 //! command parsing, the pull request state machine, comment templates, and
 //! `evaluate(snapshot) -> Plan`.
 
+pub mod cla;
 pub mod command;
 pub mod config;
 pub mod evaluate;

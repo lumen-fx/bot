@@ -204,18 +204,29 @@ impl Default for Stale {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Cla {
+    /// Publish the `cla` check on pull requests and merge groups.
     #[serde(default)]
     pub enabled: bool,
+    /// The repository that holds the signatures, `owner/name`.
     #[serde(default)]
     pub store: String,
+    /// The signature file in the store, in CLA Assistant's JSON format.
     #[serde(default)]
     pub path: String,
+    /// Link to the agreement.
     #[serde(default)]
     pub document: String,
+    /// What a contributor writes after `@<bot> sign`, exactly.
     #[serde(default)]
     pub sentence: String,
+    /// Accounts that never sign, by numeric ID. Bot accounts and the
+    /// maintainers in `[permissions]` are exempt without being listed.
     #[serde(default)]
     pub allow_ids: Vec<u64>,
+    /// Lock a pull request's conversation once it merges, so the signing
+    /// comments on it cannot be edited afterwards.
+    #[serde(default)]
+    pub lock_after_merge: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
@@ -525,8 +536,20 @@ impl Config {
         if raw.stale.author_nudge_days == 0 {
             errors.push("stale.author_nudge_days must be at least 1".into());
         }
-        if raw.cla.enabled && raw.cla.sentence.trim().is_empty() {
-            errors.push("cla.sentence is required when cla.enabled = true".into());
+        if raw.cla.enabled {
+            let c = &raw.cla;
+            if c.sentence.trim().is_empty() {
+                errors.push("cla.sentence is required when cla.enabled = true".into());
+            } else if c.sentence.contains(['\n', '\r', '`']) || !c.sentence.is_ascii() {
+                errors.push("cla.sentence must be one line of ASCII text without backticks".into());
+            }
+            let parts: Vec<&str> = c.store.split('/').collect();
+            if parts.len() != 2 || parts.iter().any(|p| p.is_empty()) {
+                errors.push("cla.store must be `owner/name` when cla.enabled = true".into());
+            }
+            if c.path.is_empty() || c.path.starts_with('/') || c.path.contains("..") {
+                errors.push("cla.path must be a relative path in the store".into());
+            }
         }
         if raw.migration.enabled && (raw.migration.label.is_empty() || raw.migration.dir.is_empty())
         {
@@ -642,6 +665,7 @@ mod tests {
         let c = Config::parse(LUMEN).expect("example config is valid");
         assert_eq!(c.labels().author, "S-Waiting-On-Author");
         assert!(c.raw.cla.enabled);
+        assert!(c.raw.cla.lock_after_merge);
         assert_eq!(c.raw.repins["candela"].workflow, "candela-pin.yml");
     }
 
@@ -700,6 +724,18 @@ mod tests {
         let c = Config::parse("[labels.self_service]\nallow=[\"A-*\"]\n").unwrap();
         assert!(c.is_self_service_label("A-Text"));
         assert!(!c.is_self_service_label("S-Needs-Review"));
+    }
+
+    #[test]
+    fn an_enabled_cla_needs_its_store_and_sentence() {
+        let e = Config::parse("[cla]\nenabled = true\n").unwrap_err();
+        assert_eq!(e.len(), 3, "{e:?}");
+        let e = Config::parse(
+            "[cla]\nenabled = true\nstore = \"o/r\"\npath = \"a.json\"\nsentence = \"I `sign`\"\n",
+        )
+        .unwrap_err();
+        assert!(e[0].contains("one line"), "{e:?}");
+        assert!(Config::parse("[cla]\nenabled = false\n").is_ok());
     }
 
     #[test]

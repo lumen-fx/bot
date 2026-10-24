@@ -13,10 +13,11 @@ use tokio::sync::Notify;
 use lumenfx_engine::plan::Plan;
 use lumenfx_engine::snapshot::BotIdentity;
 
+use crate::cla;
 use crate::db::{self, EventRow, NewEvent};
 use crate::executor::Executor;
 use crate::github::{Api, ApiFactory};
-use crate::snapshot::{Builder, CLA_CHECK, COVERAGE_CHECK};
+use crate::snapshot::{Builder, COVERAGE_CHECK, load_config};
 
 pub type Clock = Arc<dyn Fn() -> DateTime<Utc> + Send + Sync>;
 
@@ -50,6 +51,12 @@ pub enum Target {
     },
     /// Re-evaluate every open thread of a repository.
     Sweep(String),
+    /// A merge group waits for its required checks.
+    MergeGroup {
+        repo: String,
+        head_sha: String,
+        head_ref: String,
+    },
     /// Nothing to evaluate.
     Ignore(&'static str),
 }
@@ -95,7 +102,7 @@ pub fn target(event: &str, payload: &Value, bot_login: &str, bot_slug: &str) -> 
                     run["conclusion"].as_str(),
                     Some("success" | "neutral" | "skipped")
                 );
-            if failed || name == CLA_CHECK || name == COVERAGE_CHECK {
+            if failed || name == COVERAGE_CHECK {
                 Target::Commit {
                     repo,
                     sha: run["head_sha"].as_str().unwrap_or("").to_string(),
@@ -137,6 +144,14 @@ pub fn target(event: &str, payload: &Value, bot_login: &str, bot_slug: &str) -> 
                 }
             } else {
                 Target::Ignore("workflow run covered by its check suite")
+            }
+        }
+        "merge_group" if action == "checks_requested" => {
+            let g = &payload["merge_group"];
+            Target::MergeGroup {
+                repo,
+                head_sha: g["head_sha"].as_str().unwrap_or("").to_string(),
+                head_ref: g["head_ref"].as_str().unwrap_or("").to_string(),
             }
         }
         "job" => match (payload["repo"].as_str(), payload["number"].as_u64()) {
@@ -235,6 +250,15 @@ impl<F: ApiFactory> Worker<F> {
                 }
                 db::mark_processed(&self.pool, &ev.delivery_id, None).await
             }
+            Target::MergeGroup {
+                repo,
+                head_sha,
+                head_ref,
+            } => {
+                self.merge_group(installation, &repo, &head_sha, &head_ref)
+                    .await?;
+                db::mark_processed(&self.pool, &ev.delivery_id, None).await
+            }
             Target::Sweep(repo) => {
                 let api = self.factory.for_installation(installation);
                 let open = api
@@ -249,6 +273,61 @@ impl<F: ApiFactory> Worker<F> {
                 db::mark_processed(&self.pool, &ev.delivery_id, None).await
             }
         }
+    }
+
+    /// Publish `cla` on a merge group in a gated repository: success only
+    /// when every pull request in the group passed it on its queued head.
+    pub async fn merge_group(
+        &self,
+        installation: u64,
+        repo: &str,
+        head_sha: &str,
+        head_ref: &str,
+    ) -> Result<()> {
+        let api = self.factory.for_installation(installation);
+        let repo_doc = api.get(&format!("/repos/{repo}")).await?;
+        let default_branch = repo_doc["default_branch"].as_str().unwrap_or("main");
+        let config = load_config(&api, &self.pool, repo, default_branch).await?;
+        if !config.effective().is_some_and(|c| c.raw.cla.enabled) {
+            return Ok(());
+        }
+        let members = cla::group_members(&api, repo, head_sha, head_ref, &self.bot.slug).await?;
+        let run = lumenfx_engine::cla::merge_group_check(head_sha, &members);
+        let existing = api
+            .get_all(
+                &format!(
+                    "/repos/{repo}/commits/{head_sha}/check-runs?check_name={}",
+                    run.name
+                ),
+                Some("check_runs"),
+            )
+            .await?
+            .into_iter()
+            .filter(|r| r["app"]["slug"].as_str() == Some(self.bot.slug.as_str()))
+            .max_by_key(|r| r["id"].as_u64().unwrap_or(0));
+        if let Some(r) = &existing
+            && r["conclusion"].as_str() == run.conclusion.as_deref()
+            && r["output"]["summary"].as_str() == Some(run.summary.as_str())
+        {
+            return Ok(());
+        }
+        let plan_id = format!("{repo}@{head_sha}");
+        tracing::info!(%repo, %head_sha, check = %serde_json::to_string(&run).unwrap_or_default(), dry_run = self.dry_run, "merge group");
+        Executor {
+            api: &api,
+            store_api: None,
+            pool: &self.pool,
+            dry_run: self.dry_run,
+            installation_id: installation,
+        }
+        .check_run(
+            repo,
+            0,
+            existing.and_then(|r| r["id"].as_u64()),
+            &run,
+            &plan_id,
+        )
+        .await
     }
 
     async fn prs_for_commit(&self, installation: u64, repo: &str, sha: &str) -> Result<Vec<u64>> {
@@ -331,8 +410,13 @@ impl<F: ApiFactory> Worker<F> {
             %repo, number, plan = %serde_json::to_string(&plan).unwrap_or_default(),
             dry_run = self.dry_run, "plan"
         );
+        let store_api = plan
+            .cla_signatures
+            .first()
+            .map(|sig| self.factory.for_store(installation, &sig.store));
         Executor {
             api: &api,
+            store_api: store_api.as_ref(),
             pool: &self.pool,
             dry_run: self.dry_run,
             installation_id: installation,
@@ -382,8 +466,31 @@ mod tests {
             }
         );
         assert!(matches!(
-            target("check_run", &run("cla", "success"), b.0, b.1),
+            target("check_run", &run("codecov/patch", "success"), b.0, b.1),
             Target::Commit { .. }
+        ));
+        assert!(matches!(
+            target("check_run", &run("cla", "success"), b.0, b.1),
+            Target::Ignore(_)
+        ));
+    }
+
+    #[test]
+    fn a_merge_group_asks_for_its_checks() {
+        let p = json!({ "action": "checks_requested", "repository": { "full_name": "o/r" },
+                        "merge_group": { "head_sha": "g1", "head_ref": "refs/heads/gh-readonly-queue/main/pr-5-b0" } });
+        assert_eq!(
+            target("merge_group", &p, "b[bot]", "b"),
+            Target::MergeGroup {
+                repo: "o/r".into(),
+                head_sha: "g1".into(),
+                head_ref: "refs/heads/gh-readonly-queue/main/pr-5-b0".into()
+            }
+        );
+        let p = json!({ "action": "destroyed", "repository": { "full_name": "o/r" }, "merge_group": {} });
+        assert!(matches!(
+            target("merge_group", &p, "b[bot]", "b"),
+            Target::Ignore(_)
         ));
     }
 

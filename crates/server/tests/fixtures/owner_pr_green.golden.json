@@ -14,6 +14,12 @@
     ],
     [
       "check-run",
+      "cla success",
+      "11.4",
+      false
+    ],
+    [
+      "check-run",
       "docs neutral",
       "17.3 / 5",
       false
@@ -44,6 +50,20 @@
           },
           "method": "POST",
           "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "body": {
+            "conclusion": "success",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "cla",
+            "output": {
+              "summary": "Everyone whose commits are on this pull request has signed the CLA or does not need to.\n",
+              "title": "CLA signed"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
         },
         {
           "body": {

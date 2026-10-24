@@ -2,6 +2,7 @@
 //! and no `@` outside code spans except the one mention a nudge carries; a
 //! test renders each template and checks those rules.
 
+use crate::cla::{GroupMember, State, Verdict};
 use crate::config::Config;
 
 /// The hidden marker that identifies the status comment.
@@ -84,6 +85,18 @@ pub const COMMANDS: &[CommandHelp] = &[
         effect: "Resolves a concern.",
     },
     CommandHelp {
+        usage: "sign SENTENCE",
+        where_: "pull request",
+        who: "a contributor to the pull request who has not signed the CLA",
+        effect: "Signs the CLA in repositories that ask for one. SENTENCE is the repository's sentence, word for word, on the same line; the `cla` check shows it.",
+    },
+    CommandHelp {
+        usage: "recheck",
+        where_: "pull request",
+        who: "anyone",
+        effect: "Reads the CLA signatures again and updates the `cla` check.",
+    },
+    CommandHelp {
         usage: "no-docs-needed",
         where_: "pull request",
         who: "maintainer",
@@ -93,8 +106,6 @@ pub const COMMANDS: &[CommandHelp] = &[
 
 /// Commands planned for later versions; they answer "not available yet".
 pub const NOT_YET: &[&str] = &[
-    "cla",
-    "sign",
     "approve-ci",
     "rerun",
     "requeue",
@@ -233,17 +244,167 @@ pub fn status_comment(v: &StatusView) -> String {
     s
 }
 
-/// While the CLA workflow still runs the signing, the item points at it
-/// rather than repeating its instructions.
-pub fn item_cla_unsigned(cfg: &Config) -> String {
+/// The line a contributor posts to sign, as a code span.
+pub fn sign_line(slug: &str, sentence: &str) -> String {
+    format!("`@{slug} sign {}`", clean(sentence))
+}
+
+fn logins(users: &[crate::snapshot::UserRef]) -> String {
+    users
+        .iter()
+        .map(|u| code(&u.login))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+fn document(cfg: &Config) -> String {
     if cfg.raw.cla.document.is_empty() {
-        "CLA not signed. The `cla` check on this pull request says how to sign.".to_string()
+        "the CLA".to_string()
     } else {
-        format!(
-            "CLA not signed. Read the [CLA]({}); the `cla` check on this pull request says how to sign.",
-            cfg.raw.cla.document
-        )
+        format!("the [CLA]({})", cfg.raw.cla.document)
     }
+}
+
+/// The CLA lines of the status comment: (done, text).
+pub fn cla_items(cfg: &Config, v: &Verdict, slug: &str) -> Vec<(bool, String)> {
+    let mut out = Vec::new();
+    match &v.state {
+        State::Signed => {
+            let mut t = "CLA signed".to_string();
+            if !v.unresolved.is_empty() {
+                t.push_str(&format!(
+                    ". Co-authors with no GitHub account are not asked to sign: {}",
+                    names(&v.unresolved)
+                ));
+            }
+            out.push((true, t));
+        }
+        State::Unknown(_) => out.push((
+            false,
+            format!(
+                "CLA: the signature store could not be read. The bot reads it again on the next change, or on `@{slug} recheck`."
+            ),
+        )),
+        State::Unsigned => {
+            if !v.missing.is_empty() {
+                let who = if v.missing.len() == 1 {
+                    "sign"
+                } else {
+                    "each of them signs"
+                };
+                out.push((
+                    false,
+                    format!(
+                        "CLA not signed by {}. Read {}, then {who} by commenting this line on this pull request: {}",
+                        logins(&v.missing),
+                        document(cfg),
+                        sign_line(slug, &cfg.raw.cla.sentence)
+                    ),
+                ));
+            }
+            for (sha, name) in &v.unlinked {
+                out.push((false, unlinked_text(sha, name)));
+            }
+        }
+    }
+    out
+}
+
+fn names(ns: &[String]) -> String {
+    ns.iter().map(|n| code(n)).collect::<Vec<_>>().join(", ")
+}
+
+fn unlinked_text(sha: &str, name: &str) -> String {
+    let by = if name.trim().is_empty() {
+        String::new()
+    } else {
+        format!(" by {}", code(name))
+    };
+    format!(
+        "CLA: commit {} is authored{by} with an email linked to no GitHub account. Add the email to your GitHub account, or re-author the commit with an email that is, and push.",
+        code(sha)
+    )
+}
+
+pub fn cla_check_title(v: &Verdict) -> String {
+    if v.missing.is_empty() {
+        "A commit email is linked to no GitHub account".to_string()
+    } else {
+        let who: Vec<String> = v.missing.iter().map(|u| clean(&u.login)).collect();
+        format!("CLA not signed by {}", who.join(", "))
+    }
+}
+
+pub fn cla_check_summary(cfg: &Config, v: &Verdict, slug: &str) -> String {
+    let mut s = String::new();
+    match &v.state {
+        State::Signed => s.push_str(
+            "Everyone whose commits are on this pull request has signed the CLA or does not need to.\n",
+        ),
+        State::Unknown(e) => s.push_str(&format!(
+            "The signature store could not be read ({}). The bot reads it again on the next change, or on `@{slug} recheck`.\n",
+            clean(e)
+        )),
+        State::Unsigned => {
+            if !v.missing.is_empty() {
+                s.push_str(&format!(
+                    "Not signed yet: {}.\n\nRead {}. To sign, comment this line on this pull request, from the account that has not signed:\n\n{}\n\nSigning is once per GitHub account and covers every later pull request.\n",
+                    logins(&v.missing),
+                    document(cfg),
+                    sign_line(slug, &cfg.raw.cla.sentence)
+                ));
+            }
+            for (sha, name) in &v.unlinked {
+                s.push_str(&format!("\n{}\n", unlinked_text(sha, name)));
+            }
+        }
+    }
+    if !v.unresolved.is_empty() {
+        s.push_str(&format!(
+            "\nCo-authors with no GitHub account are not asked to sign: {}.\n",
+            names(&v.unresolved)
+        ));
+    }
+    s.trim_start().to_string()
+}
+
+pub fn merge_group_summary(members: &[GroupMember], failing: &[u64]) -> String {
+    if members.is_empty() {
+        return "The bot could not tell which pull requests are in this merge group, so it cannot vouch for their CLA.\n".to_string();
+    }
+    let mut s =
+        String::from("The `cla` check of each pull request on the head that was queued:\n\n");
+    for m in members {
+        let state = match m.cla {
+            Some(crate::snapshot::CheckState::Success) => "signed",
+            Some(crate::snapshot::CheckState::Failure) => "not signed",
+            Some(crate::snapshot::CheckState::Pending) => "not reported yet",
+            None => "no `cla` check",
+        };
+        let short: String = m.head_sha.chars().take(7).collect();
+        s.push_str(&format!("- #{}: {} at {}\n", m.number, state, code(&short)));
+    }
+    if !failing.is_empty() {
+        s.push_str("\nThe group fails until every pull request in it has signed.\n");
+    }
+    s
+}
+
+/// Reply to a `sign` whose words are not the sentence.
+pub fn sign_wrong_sentence(slug: &str, sentence: &str) -> String {
+    format!(
+        "That is not the CLA sentence. To sign, comment exactly this line, with nothing before or after it: {}",
+        sign_line(slug, sentence)
+    )
+}
+
+/// Reply to a `sign` from someone this pull request does not need.
+pub fn sign_not_needed() -> String {
+    "`sign`: only someone whose commits are on this pull request, and who has not signed the CLA, can sign here. To sign for your own contributions, comment the same line on your pull request.".to_string()
+}
+
+pub fn sign_not_gated() -> String {
+    "`sign`: this repository does not ask for a CLA.".to_string()
 }
 
 pub fn item_conflict(base: &str) -> String {
@@ -383,6 +544,18 @@ mod tests {
     #[test]
     fn every_template_follows_the_style() {
         let cfg = Config::parse(include_str!("../../../examples/lumenfx.toml")).unwrap();
+        let v = Verdict {
+            state: State::Unsigned,
+            missing: vec![crate::snapshot::UserRef {
+                id: 5,
+                login: "newcomer".into(),
+                is_bot: false,
+            }],
+            unlinked: vec![("abc1234".into(), "Some One".into())],
+            unresolved: vec!["Claude".into()],
+        };
+        let mut cla = cla_items(&cfg, &v, "lumenfx-bot");
+        assert_eq!(cla.len(), 2);
         let full = StatusView {
             held_by_pullsift: false,
             welcome: Some(Welcome {
@@ -392,7 +565,8 @@ mod tests {
             headline: "waiting on author".into(),
             label: Some("S-Waiting-On-Author".into()),
             items: vec![
-                (false, item_cla_unsigned(&cfg)),
+                cla.remove(0),
+                cla.remove(0),
                 (false, item_conflict("main")),
                 (
                     false,
@@ -429,6 +603,34 @@ mod tests {
             None,
         );
         assert_style(&conflict_comment("main"), None);
+        assert_style(&cla_check_summary(&cfg, &v, "lumenfx-bot"), None);
+        assert_style(&cla_check_title(&v), None);
+        for state in [State::Signed, State::Unknown("HTTP 503".into())] {
+            let v = Verdict { state, ..v.clone() };
+            assert_style(&cla_check_summary(&cfg, &v, "lumenfx-bot"), None);
+            for (_, t) in cla_items(&cfg, &v, "lumenfx-bot") {
+                assert_style(&t, None);
+            }
+        }
+        let m = |n, cla| GroupMember {
+            number: n,
+            head_sha: "abcdef0123".into(),
+            cla,
+        };
+        assert_style(
+            &merge_group_summary(
+                &[m(1, Some(crate::snapshot::CheckState::Success)), m(2, None)],
+                &[2],
+            ),
+            None,
+        );
+        assert_style(&merge_group_summary(&[], &[]), None);
+        assert_style(
+            &sign_wrong_sentence("lumenfx-bot", &cfg.raw.cla.sentence),
+            None,
+        );
+        assert_style(&sign_not_needed(), None);
+        assert_style(&sign_not_gated(), None);
         assert_style(
             &nudge_comment("@newcomer", 14, Some("https://x")),
             Some("@newcomer"),

@@ -1,6 +1,7 @@
 //! The lumenfx bot server: webhook receiver, workers, executor, scheduler,
 //! and the read-only `/status` and `/help` pages.
 
+pub mod cla;
 pub mod db;
 pub mod executor;
 pub mod fake;

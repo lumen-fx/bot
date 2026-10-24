@@ -1,0 +1,95 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      true
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      true
+    ],
+    [
+      "check-run",
+      "cla failure",
+      "11.4",
+      true
+    ],
+    [
+      "cla-sign",
+      "newcomer",
+      "11.2",
+      true
+    ],
+    [
+      "reaction",
+      "7000003",
+      "7 acknowledge",
+      true
+    ],
+    [
+      "check-run",
+      "cla success",
+      "11.4",
+      true
+    ],
+    [
+      "cla-sign",
+      "newcomer",
+      "11.2",
+      true
+    ],
+    [
+      "check-run",
+      "cla success",
+      "11.4",
+      true
+    ]
+  ],
+  "final_cla_store": {
+    "signedContributors": [
+      {
+        "comment_id": 5667357883,
+        "created_at": "2026-09-14T16:37:29Z",
+        "id": 313325032,
+        "name": "AeroForger",
+        "pullRequestNo": 355,
+        "repoId": 1328973863
+      }
+    ]
+  },
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": []
+    },
+    {
+      "step": 1,
+      "writes": []
+    }
+  ]
+}

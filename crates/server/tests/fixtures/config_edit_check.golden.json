@@ -2,6 +2,12 @@
   "actions_log": [
     [
       "check-run",
+      "cla success",
+      "11.4",
+      false
+    ],
+    [
+      "check-run",
       "lumenfx config failure",
       "17.3 / 5",
       false
@@ -28,11 +34,25 @@
       "writes": [
         {
           "body": {
+            "conclusion": "success",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "cla",
+            "output": {
+              "summary": "Everyone whose commits are on this pull request has signed the CLA or does not need to.\n",
+              "title": "CLA signed"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        },
+        {
+          "body": {
             "conclusion": "failure",
             "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
             "name": "lumenfx config",
             "output": {
-              "summary": "The edited `.github/lumenfx.toml` does not validate:\n\n- TOML parse error at line 2, column 1   | 2 | enabeld = true   | ^^^^^^^ unknown field 'enabeld', expected one of 'enabled', 'store', 'path', 'document', 'sentence', 'allow_ids' \n",
+              "summary": "The edited `.github/lumenfx.toml` does not validate:\n\n- TOML parse error at line 2, column 1   | 2 | enabeld = true   | ^^^^^^^ unknown field 'enabeld', expected one of 'enabled', 'store', 'path', 'document', 'sentence', 'allow_ids', 'lock_after_merge' \n",
               "title": "Config has 1 error(s)"
             },
             "status": "completed"

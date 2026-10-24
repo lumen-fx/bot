@@ -18,6 +18,11 @@ pub struct Plan {
     pub comments: Vec<NewComment>,
     pub reactions: Vec<Reaction>,
     pub check_runs: Vec<CheckRun>,
+    /// Signatures to append to the CLA store before anything else is
+    /// written.
+    pub cla_signatures: Vec<ClaSignature>,
+    /// Lock the conversation.
+    pub lock: bool,
     /// The thread's state after this evaluation; stored as is.
     pub state: EntityState,
     pub jobs: Vec<Job>,
@@ -59,9 +64,27 @@ pub struct Reaction {
 pub struct CheckRun {
     pub name: String,
     pub head_sha: String,
-    pub conclusion: String,
+    /// `None` publishes the run as in progress.
+    pub conclusion: Option<String>,
     pub title: String,
     pub summary: String,
+}
+
+/// One entry of the CLA store, in CLA Assistant's format.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ClaSignature {
+    /// `owner/name` of the store, and the file in it.
+    pub store: String,
+    pub path: String,
+    /// The login at signing; matching is always by `id`.
+    pub name: String,
+    pub id: u64,
+    /// The signing comment: the signature's record.
+    pub comment_id: u64,
+    pub created_at: DateTime<Utc>,
+    pub repo: String,
+    pub repo_id: u64,
+    pub pull_request: u64,
 }
 
 /// A re-evaluation of this thread at a later time.
@@ -80,5 +103,7 @@ impl Plan {
             && self.comments.is_empty()
             && self.reactions.is_empty()
             && self.check_runs.is_empty()
+            && self.cla_signatures.is_empty()
+            && !self.lock
     }
 }

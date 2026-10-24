@@ -4,6 +4,8 @@ GitHub App that triages lumen-fx pull requests and issues: status labels, area l
 
 Config lives in each repo's `.github/lumenfx.toml`; see `examples/lumenfx.toml`. Commands are listed on the bot's `/help` page.
 
+A repo with `[cla] enabled = true` gets the `cla` check on pull requests and merge groups. Contributors sign with `@lumenfx-bot sign <sentence>`; signatures go to the store repo the config names, so the App needs contents write there.
+
 ## Development
 
 ```sh

@@ -8,15 +8,18 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use sqlx::PgPool;
 
-use lumenfx_engine::plan::Plan;
+use lumenfx_engine::plan::{CheckRun, Plan};
 use lumenfx_engine::snapshot::{Item, Snapshot};
 use lumenfx_engine::templates::STATUS_MARKER;
 
+use crate::cla;
 use crate::db::{self, LogEntry};
 use crate::github::{Api, Method};
 
 pub struct Executor<'a, A: Api> {
     pub api: &'a A,
+    /// Writes the CLA signature store; needed only when the plan signs.
+    pub store_api: Option<&'a A>,
     pub pool: &'a PgPool,
     pub dry_run: bool,
     pub installation_id: u64,
@@ -35,15 +38,28 @@ impl<A: Api> Executor<'_, A> {
         target: &str,
         rule: &str,
     ) -> Result<()> {
+        self.log_at(&s.repo, s.number, plan_id, action, target, rule)
+            .await
+    }
+
+    async fn log_at(
+        &self,
+        repo: &str,
+        number: u64,
+        plan_id: &str,
+        action: &str,
+        target: &str,
+        rule: &str,
+    ) -> Result<()> {
         tracing::info!(
-            repo = %s.repo, number = s.number, %action, %target, %rule, dry_run = self.dry_run,
+            %repo, number, %action, %target, %rule, dry_run = self.dry_run,
             "{}", if self.dry_run { "would write" } else { "write" }
         );
         db::log_action(
             self.pool,
             LogEntry {
-                repo: &s.repo,
-                number: s.number as i64,
+                repo,
+                number: number as i64,
                 action,
                 target,
                 rule,
@@ -74,6 +90,18 @@ impl<A: Api> Executor<'_, A> {
             Item::Pr(pr) => &pr.labels,
             Item::Issue(i) => &i.labels,
         };
+
+        // Signatures first: if the store cannot be written, nothing else
+        // goes out, and the event is retried with the same plan.
+        for sig in &plan.cla_signatures {
+            if !self.dry_run {
+                let api = self
+                    .store_api
+                    .ok_or_else(|| anyhow::anyhow!("no store writer for a plan that signs"))?;
+                cla::append(api, self.pool, sig).await?;
+            }
+            self.log(s, plan_id, "cla-sign", &sig.name, "11.2").await?;
+        }
 
         let adds: Vec<&str> = plan
             .labels
@@ -207,43 +235,22 @@ impl<A: Api> Executor<'_, A> {
         }
 
         for cr in &plan.check_runs {
-            let body = json!({
-                "name": cr.name,
-                "head_sha": cr.head_sha,
-                "status": "completed",
-                "conclusion": cr.conclusion,
-                "output": { "title": cr.title, "summary": cr.summary },
-            });
             let existing = match &s.item {
                 Item::Pr(pr) => pr.own_checks.get(&cr.name).map(|c| c.id),
                 Item::Issue(_) => None,
             };
-            match existing {
-                Some(id) => {
-                    self.write(
-                        Method::Patch,
-                        &format!("/repos/{repo}/check-runs/{id}"),
-                        Some(body),
-                    )
-                    .await?
-                }
-                None => {
-                    self.write(
-                        Method::Post,
-                        &format!("/repos/{repo}/check-runs"),
-                        Some(body),
-                    )
-                    .await?
-                }
-            };
-            self.log(
-                s,
-                plan_id,
-                "check-run",
-                &format!("{} {}", cr.name, cr.conclusion),
-                "17.3 / 5",
+            self.check_run(repo, n, existing, cr, plan_id).await?;
+        }
+
+        if plan.lock {
+            self.write(
+                Method::Put,
+                &format!("/repos/{repo}/issues/{n}/lock"),
+                Some(json!({})),
             )
             .await?;
+            self.log(s, plan_id, "lock", "", "11.4 lock after merge")
+                .await?;
         }
 
         db::save_entity(self.pool, repo, ni, &plan.state).await?;
@@ -258,5 +265,65 @@ impl<A: Api> Executor<'_, A> {
             .await?;
         }
         Ok(())
+    }
+
+    /// Create or update one check run. `number` is the thread it is
+    /// logged under; 0 for a merge group.
+    pub async fn check_run(
+        &self,
+        repo: &str,
+        number: u64,
+        existing: Option<u64>,
+        cr: &CheckRun,
+        plan_id: &str,
+    ) -> Result<()> {
+        let mut body = json!({
+            "name": cr.name,
+            "head_sha": cr.head_sha,
+            "output": { "title": cr.title, "summary": cr.summary },
+        });
+        match &cr.conclusion {
+            Some(c) => {
+                body["status"] = json!("completed");
+                body["conclusion"] = json!(c);
+            }
+            None => body["status"] = json!("in_progress"),
+        }
+        match existing {
+            Some(id) => {
+                self.write(
+                    Method::Patch,
+                    &format!("/repos/{repo}/check-runs/{id}"),
+                    Some(body),
+                )
+                .await?
+            }
+            None => {
+                self.write(
+                    Method::Post,
+                    &format!("/repos/{repo}/check-runs"),
+                    Some(body),
+                )
+                .await?
+            }
+        };
+        let rule = if cr.name == lumenfx_engine::cla::CLA_CHECK {
+            "11.4"
+        } else {
+            "17.3 / 5"
+        };
+        self.log_at(
+            repo,
+            number,
+            plan_id,
+            "check-run",
+            &format!(
+                "{} {}",
+                cr.name,
+                cr.conclusion.as_deref().unwrap_or("in_progress")
+            ),
+            rule,
+        )
+        .await
     }
 }

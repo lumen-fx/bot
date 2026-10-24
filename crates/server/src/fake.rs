@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -17,6 +18,9 @@ pub struct Write {
     pub path: String,
     #[serde(default, skip_serializing_if = "Value::is_null")]
     pub body: Value,
+    /// The HTTP status of a write GitHub refused.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub refused: Option<u16>,
 }
 
 #[derive(Default)]
@@ -25,6 +29,8 @@ struct Inner {
     graphql: BTreeMap<String, Value>,
     writes: Vec<Write>,
     next_id: u64,
+    /// Store writes that lose a race: another writer appends first.
+    store_races: u32,
 }
 
 #[derive(Clone)]
@@ -50,6 +56,7 @@ impl FakeGitHub {
                 graphql,
                 writes: Vec::new(),
                 next_id: 9_000_000,
+                store_races: 0,
             })),
             bot_login: format!("{bot_slug}[bot]"),
             bot_slug: bot_slug.to_string(),
@@ -77,6 +84,13 @@ impl FakeGitHub {
         } else {
             inner.docs.insert(path.to_string(), v);
         }
+    }
+
+    /// The next `n` writes to a contents path find that someone else wrote
+    /// the file first: the fake appends a signature of its own and answers
+    /// 409, as GitHub does when the blob SHA no longer matches.
+    pub fn race_store_writes(&self, n: u32) {
+        self.inner.lock().unwrap().store_races = n;
     }
 
     pub fn graphql_doc(&self, key: &str) -> Option<Value> {
@@ -190,6 +204,50 @@ impl FakeGitHub {
                 }
                 .into())
             }
+            (Method::Put, ["repos", o, r, "issues", n, "lock"]) => {
+                for doc in [
+                    format!("/repos/{o}/{r}/pulls/{n}"),
+                    format!("/repos/{o}/{r}/issues/{n}"),
+                ] {
+                    if let Some(d) = inner.docs.get_mut(&doc) {
+                        d["locked"] = json!(true);
+                    }
+                }
+                Ok(Value::Null)
+            }
+            (Method::Put, ["repos", o, r, "contents", rest @ ..]) => {
+                let path = format!("/repos/{o}/{r}/contents/{}", rest.join("/"));
+                let current = inner
+                    .docs
+                    .get(&path)
+                    .and_then(|d| d["sha"].as_str())
+                    .map(String::from);
+                if inner.store_races > 0 {
+                    inner.store_races -= 1;
+                    let mut file = current_file(inner.docs.get(&path));
+                    file["signedContributors"]
+                        .as_array_mut()
+                        .expect("signedContributors")
+                        .push(json!({
+                            "name": "racer", "id": 4242, "comment_id": 1,
+                            "created_at": "2026-10-22T00:00:00Z", "repoId": 1, "pullRequestNo": 1,
+                        }));
+                    let text = serde_json::to_string_pretty(&file)?;
+                    inner
+                        .docs
+                        .insert(path, file_doc(&format!("race{id}"), &text));
+                    return Err(conflict());
+                }
+                if body["sha"].as_str() != current.as_deref() {
+                    return Err(conflict());
+                }
+                let content = body["content"].as_str().unwrap_or("");
+                let text =
+                    String::from_utf8(base64::engine::general_purpose::STANDARD.decode(content)?)?;
+                let sha = format!("blob{id}");
+                inner.docs.insert(path, file_doc(&sha, &text));
+                Ok(json!({ "content": { "sha": sha } }))
+            }
             (Method::Post, ["repos", _, _, "issues", "comments", _, "reactions"]) => {
                 Ok(json!({ "id": id }))
             }
@@ -241,6 +299,31 @@ impl FakeGitHub {
     }
 }
 
+fn conflict() -> anyhow::Error {
+    HttpError {
+        status: 409,
+        body: "fake: the file changed".into(),
+    }
+    .into()
+}
+
+/// A contents document for a file.
+pub fn file_doc(sha: &str, text: &str) -> Value {
+    json!({
+        "sha": sha,
+        "size": text.len(),
+        "content": base64::engine::general_purpose::STANDARD.encode(text),
+    })
+}
+
+/// The JSON a contents document holds; an empty store when there is none.
+pub fn current_file(doc: Option<&Value>) -> Value {
+    doc.and_then(|d| d["content"].as_str())
+        .and_then(|c| base64::engine::general_purpose::STANDARD.decode(c).ok())
+        .and_then(|b| serde_json::from_slice(&b).ok())
+        .unwrap_or_else(|| json!({ "signedContributors": [] }))
+}
+
 impl Api for FakeGitHub {
     async fn get(&self, path: &str) -> Result<Value> {
         self.lookup(path)
@@ -268,13 +351,18 @@ impl Api for FakeGitHub {
     }
 
     async fn send(&self, method: Method, path: &str, body: Option<Value>) -> Result<Value> {
-        let out = self.apply(method, path, &body)?;
+        let out = self.apply(method, path, &body);
+        let refused = out
+            .as_ref()
+            .err()
+            .and_then(|e| e.downcast_ref::<HttpError>().map(|h| h.status));
         self.inner.lock().unwrap().writes.push(Write {
             method: format!("{method:?}").to_uppercase(),
             path: path.to_string(),
             body: body.unwrap_or(Value::Null),
+            refused,
         });
-        Ok(out)
+        out
     }
 }
 
@@ -293,6 +381,10 @@ impl ApiFactory for FakeGitHub {
     type Api = FakeGitHub;
 
     fn for_installation(&self, _installation_id: u64) -> FakeGitHub {
+        self.clone()
+    }
+
+    fn for_store(&self, _installation_id: u64, _repo: &str) -> FakeGitHub {
         self.clone()
     }
 

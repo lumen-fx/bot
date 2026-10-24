@@ -1,0 +1,188 @@
+{
+  "actions_log": [
+    [
+      "label-add",
+      "S-Waiting-On-Author",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Needs-Review",
+      "9.2 rule 4",
+      false
+    ],
+    [
+      "status-create",
+      "",
+      "8.1",
+      false
+    ],
+    [
+      "check-run",
+      "cla failure",
+      "11.4",
+      false
+    ],
+    [
+      "label-remove",
+      "S-Waiting-On-Author",
+      "9.2 rule 5",
+      false
+    ],
+    [
+      "label-add",
+      "S-Needs-Review",
+      "9.2 rule 5",
+      false
+    ],
+    [
+      "status-edit",
+      "9000003",
+      "8.1",
+      false
+    ],
+    [
+      "reaction",
+      "7000005",
+      "7 acknowledge",
+      false
+    ],
+    [
+      "check-run",
+      "cla success",
+      "11.4",
+      false
+    ]
+  ],
+  "final_cla_store": {
+    "signedContributors": [
+      {
+        "comment_id": 5667357883,
+        "created_at": "2026-09-14T16:37:29Z",
+        "id": 313325032,
+        "name": "AeroForger",
+        "pullRequestNo": 355,
+        "repoId": 1328973863
+      },
+      {
+        "comment_id": 3,
+        "created_at": "2026-10-21T23:00:00Z",
+        "id": 5001,
+        "name": "newcomer",
+        "pullRequestNo": 562,
+        "repoId": 1328973863
+      }
+    ]
+  },
+  "final_decision": {
+    "action": {
+      "action": "set",
+      "role": "review"
+    },
+    "blockers": [],
+    "rule": 5
+  },
+  "final_labels": [
+    "A-Runtime",
+    "C-Bug",
+    "C-Testing",
+    "D-Modest",
+    "S-Needs-Review"
+  ],
+  "steps": [
+    {
+      "step": 0,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Waiting-On-Author"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Needs-Review"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on author** (`S-Waiting-On-Author`)\n\nQueued in the merge queue.\n\nWhat is left:\n- [ ] CLA not signed by `newcomer`. Read the [CLA](https://github.com/lumen-fx/lumen/blob/main/CLA.md), then sign by commenting this line on this pull request: `@lumenfx-bot sign I have read the CLA Document and I hereby sign the CLA`\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/comments"
+        },
+        {
+          "body": {
+            "conclusion": "failure",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "cla",
+            "output": {
+              "summary": "Not signed yet: `newcomer`.\n\nRead the [CLA](https://github.com/lumen-fx/lumen/blob/main/CLA.md). To sign, comment this line on this pull request, from the account that has not signed:\n\n`@lumenfx-bot sign I have read the CLA Document and I hereby sign the CLA`\n\nSigning is once per GitHub account and covers every later pull request.\n",
+              "title": "CLA not signed by newcomer"
+            },
+            "status": "completed"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/check-runs"
+        }
+      ]
+    },
+    {
+      "step": 1,
+      "writes": []
+    },
+    {
+      "step": 2,
+      "writes": []
+    },
+    {
+      "step": 3,
+      "writes": [
+        {
+          "body": {
+            "labels": [
+              "S-Needs-Review"
+            ]
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels"
+        },
+        {
+          "method": "DELETE",
+          "path": "/repos/lumen-fx/lumen/issues/562/labels/S-Waiting-On-Author"
+        },
+        {
+          "body": {
+            "body": "<!-- lumenfx-bot:status v1 -->\n**Status: waiting on review** (`S-Needs-Review`)\n\nQueued in the merge queue.\n\nNothing is waiting on you.\n- [x] CLA signed\n- [x] No conflicts with `main`\n- [x] No merge commits\n\nChecks: 15 of 15 required green.\nCoverage: `codecov/patch` success: [86.66% of diff hit (target 80.00%)](https://app.codecov.io/gh/lumen-fx/lumen/pull/562).\nPullsift: [screened](https://github.com/lumen-fx/lumen/pull/562#issuecomment-6328080789), no action.\n\nCommands: `@lumenfx-bot help`. The bot follows `.github/lumenfx.toml` on `main`.\n"
+          },
+          "method": "PATCH",
+          "path": "/repos/lumen-fx/lumen/issues/comments/9000003"
+        },
+        {
+          "body": {
+            "content": "+1"
+          },
+          "method": "POST",
+          "path": "/repos/lumen-fx/lumen/issues/comments/7000005/reactions"
+        },
+        {
+          "body": {
+            "conclusion": "success",
+            "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
+            "name": "cla",
+            "output": {
+              "summary": "Everyone whose commits are on this pull request has signed the CLA or does not need to.\n",
+              "title": "CLA signed"
+            },
+            "status": "completed"
+          },
+          "method": "PATCH",
+          "path": "/repos/lumen-fx/lumen/check-runs/9000004"
+        }
+      ]
+    }
+  ]
+}

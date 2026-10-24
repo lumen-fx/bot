@@ -9,16 +9,18 @@ use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 
+use lumenfx_engine::cla::CLA_CHECK;
 use lumenfx_engine::command;
 use lumenfx_engine::config::{CONFIG_PATH, Config};
 use lumenfx_engine::evaluate::{CONFIG_CHECK, DOCS_CHECK};
 use lumenfx_engine::snapshot::{
-    BotIdentity, CheckState, Comment, ConfigState, Issue, Item, OwnCheck, PullRequest, Pullsift,
-    PullsiftComment, RequiredCheck, Review, ReviewState, Snapshot, StatusFacts, Stored, Thread,
-    ThreadComment, UserFacts, UserRef,
+    BotIdentity, ClaStore, Comment, CommitFacts, ConfigState, Issue, Item, OwnCheck, Person,
+    PullRequest, Pullsift, PullsiftComment, RequiredCheck, Review, ReviewState, Snapshot,
+    StatusFacts, Stored, Thread, ThreadComment, UserFacts, UserRef,
 };
 use lumenfx_engine::state::{CheckClass, Lifecycle};
 
+use crate::cla::{self, Resolver};
 use crate::db;
 use crate::github::{Api, is_not_found};
 
@@ -28,7 +30,6 @@ pub const PULLSIFT_MARKER: &str = "<!-- pullsift-score -->";
 /// The phrase Pullsift's score comment uses for a pull request it lets
 /// through.
 pub const PULLSIFT_PASS: &str = "below every action threshold";
-pub const CLA_CHECK: &str = "cla";
 pub const COVERAGE_CHECK: &str = "codecov/patch";
 
 pub const PULL_STATE_QUERY: &str = r#"query PullState($owner: String!, $name: String!, $number: Int!, $cursor: String) {
@@ -198,9 +199,29 @@ impl<A: Api> Builder<'_, A> {
         // Without a usable config only `help` is answered, so the expensive
         // reads are skipped.
         let active = config.effective().is_some();
+        let cla_cfg = config
+            .effective()
+            .map(|c| c.raw.cla.clone())
+            .filter(|c| c.enabled);
+        let mut cla_store = ClaStore::NotRead;
 
         let item = if issue.get("pull_request").is_some_and(|p| !p.is_null()) {
-            let pr = self.pull_request(repo, number, &comments, active).await?;
+            let pr = self
+                .pull_request(repo, number, &comments, active, cla_cfg.is_some())
+                .await?;
+            if let Some(c) = &cla_cfg
+                && pr.lifecycle == Lifecycle::Open
+            {
+                // A `sign` or `recheck` not handled yet reads the store
+                // afresh rather than from the cache.
+                let fresh = comments.iter().any(|c| {
+                    command::parse(&c.body, &self.bot.slug).iter().any(|cmd| {
+                        matches!(cmd.name.as_str(), "sign" | "recheck")
+                            && !store.entity.processed.contains(&(c.id, cmd.key()))
+                    })
+                });
+                cla_store = cla::signers(self.api, self.pool, &c.store, &c.path, fresh).await?;
+            }
             note(&pr.author);
             for r in &pr.reviews {
                 note(&r.user);
@@ -275,6 +296,7 @@ impl<A: Api> Builder<'_, A> {
             users,
             repo_labels,
             blocked_target_closed,
+            cla_store,
             store,
         })
     }
@@ -347,6 +369,7 @@ impl<A: Api> Builder<'_, A> {
         number: u64,
         comments: &[Comment],
         active: bool,
+        cla: bool,
     ) -> Result<PullRequest> {
         let pr = self
             .api
@@ -359,6 +382,8 @@ impl<A: Api> Builder<'_, A> {
             .as_str()
             .unwrap_or("main")
             .to_string();
+        let repo_id = pr["base"]["repo"]["id"].as_u64().unwrap_or(0);
+        let locked = pr["locked"].as_bool().unwrap_or(false);
         let lifecycle = if pr["merged"].as_bool() == Some(true) || !pr["merged_at"].is_null() {
             Lifecycle::Merged
         } else if pr["state"].as_str() == Some("closed") {
@@ -386,12 +411,14 @@ impl<A: Api> Builder<'_, A> {
                 head_sha,
                 base_ref,
                 default_branch,
+                repo_id,
+                locked,
                 mergeable_state,
                 labels,
                 files: Vec::new(),
                 merge_commits: Vec::new(),
+                commits: Vec::new(),
                 checks: Vec::new(),
-                cla_check: None,
                 coverage: None,
                 reviews: Vec::new(),
                 threads: Vec::new(),
@@ -422,6 +449,11 @@ impl<A: Api> Builder<'_, A> {
         let head_commit_time = commits
             .last()
             .and_then(|c| time(&c["commit"]["committer"]["date"]));
+        let commit_facts = if cla {
+            self.commit_facts(&commits).await?
+        } else {
+            Vec::new()
+        };
 
         let required: Vec<String> = match self
             .api
@@ -507,20 +539,6 @@ impl<A: Api> Builder<'_, A> {
             })
             .collect();
 
-        let cla_check = run_named(CLA_CHECK)
-            .map(|r| match run_class(r) {
-                CheckClass::Ok => CheckState::Success,
-                CheckClass::Pending => CheckState::Pending,
-                _ => CheckState::Failure,
-            })
-            .or_else(|| {
-                status_named(CLA_CHECK).map(|s| match status_class(s) {
-                    CheckClass::Ok => CheckState::Success,
-                    CheckClass::Pending => CheckState::Pending,
-                    _ => CheckState::Failure,
-                })
-            });
-
         // Codecov publishes `codecov/patch` as a check run; a commit status
         // of that name is read the same way.
         let coverage = run_named(COVERAGE_CHECK)
@@ -546,7 +564,7 @@ impl<A: Api> Builder<'_, A> {
             .filter(|r| r["app"]["slug"].as_str() == Some(self.bot.slug.as_str()))
             .filter_map(|r| {
                 let name = r["name"].as_str()?;
-                (name == DOCS_CHECK || name == CONFIG_CHECK).then(|| {
+                (name == DOCS_CHECK || name == CONFIG_CHECK || name == CLA_CHECK).then(|| {
                     (
                         name.to_string(),
                         OwnCheck {
@@ -644,12 +662,14 @@ impl<A: Api> Builder<'_, A> {
             head_sha,
             base_ref,
             default_branch,
+            repo_id,
+            locked,
             mergeable_state,
             labels,
             files,
             merge_commits,
+            commits: commit_facts,
             checks,
-            cla_check,
             coverage,
             reviews,
             threads,
@@ -659,6 +679,49 @@ impl<A: Api> Builder<'_, A> {
             own_checks,
             config_edit,
         })
+    }
+
+    /// The people each commit names, resolved to accounts. The commit API
+    /// resolves authors and committers; trailers go through [`Resolver`].
+    async fn commit_facts(&self, commits: &[Value]) -> Result<Vec<CommitFacts>> {
+        let mut resolver = Resolver {
+            api: self.api,
+            pool: self.pool,
+            budget: cla::SEARCH_BUDGET,
+        };
+        let mut out = Vec::new();
+        for c in commits {
+            let side = |who: &str| {
+                let git = &c["commit"][who];
+                let account =
+                    (!c[who].is_null() && c[who]["id"].as_u64().is_some()).then(|| user(&c[who]));
+                (
+                    git["email"].as_str().unwrap_or("").to_ascii_lowercase(),
+                    Person {
+                        name: git["name"].as_str().unwrap_or("").to_string(),
+                        account,
+                    },
+                )
+            };
+            let (author_email, author) = side("author");
+            let (committer_email, committer) = side("committer");
+            for (email, p) in [(&author_email, &author), (&committer_email, &committer)] {
+                if let Some(u) = &p.account {
+                    cla::remember(self.pool, email, u).await?;
+                }
+            }
+            let mut co_authors = Vec::new();
+            for (name, email) in cla::co_authors(c["commit"]["message"].as_str().unwrap_or("")) {
+                co_authors.push(resolver.person(&name, &email).await?);
+            }
+            out.push(CommitFacts {
+                sha: c["sha"].as_str().unwrap_or("").to_string(),
+                author,
+                committer,
+                co_authors,
+            });
+        }
+        Ok(out)
     }
 
     async fn threads(&self, repo: &str, number: u64) -> Result<(Vec<Thread>, bool)> {

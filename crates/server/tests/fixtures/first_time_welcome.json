@@ -1,9 +1,21 @@
 {
-  "description": "A first-time contributor with the CLA unsigned: author role, a status comment that opens with the welcome and the CLA sentence. Signing (the cla check turns green) edits the same comment and moves the pull request to review.",
+  "description": "A first-time contributor whose commits are unsigned: author role, a status comment that opens with the welcome and the exact line to sign with, and a failing cla check.",
   "world": "lumen-562",
   "number": 562,
   "now": "2026-10-21T23:10:00Z",
   "config": "example",
+  "cla_store": {
+    "signedContributors": [
+      {
+        "name": "AeroForger",
+        "id": 313325032,
+        "comment_id": 5667357883,
+        "created_at": "2026-09-14T16:37:29Z",
+        "repoId": 1328973863,
+        "pullRequestNo": 355
+      }
+    ]
+  },
   "patch": {
     "/repos/lumen-fx/lumen/pulls/562": {
       "user": {
@@ -19,20 +31,36 @@
         "type": "User"
       }
     },
-    "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
+    "/repos/lumen-fx/lumen/pulls/562/commits": [
       {
-        "id": 200000000000,
-        "name": "cla",
-        "status": "completed",
-        "conclusion": "failure",
-        "app": {
-          "slug": "github-actions"
+        "sha": "2409434594939b851a82a98737422f3e4ceef08e",
+        "parents": [
+          {
+            "sha": "85eeb55afdd90fb5c89a4d44410ffe38bde74b24"
+          }
+        ],
+        "commit": {
+          "author": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T19:48:54Z"
+          },
+          "committer": {
+            "name": "New Comer",
+            "email": "newcomer@example.com",
+            "date": "2026-10-21T22:36:07Z"
+          },
+          "message": "fix: a change"
         },
-        "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000000",
-        "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
-        "output": {
-          "title": null,
-          "summary": null
+        "author": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
+        },
+        "committer": {
+          "login": "newcomer",
+          "id": 5001,
+          "type": "User"
         }
       }
     ]
@@ -49,35 +77,6 @@
       "deliver": {
         "event": "pull_request",
         "action": "opened"
-      }
-    },
-    {
-      "patch": {
-        "docs": {
-          "/repos/lumen-fx/lumen/commits/2409434594939b851a82a98737422f3e4ceef08e/check-runs#append:check_runs": [
-            {
-              "id": 200000000001,
-              "name": "cla",
-              "status": "completed",
-              "conclusion": "success",
-              "app": {
-                "slug": "github-actions"
-              },
-              "html_url": "https://github.com/lumen-fx/lumen/actions/runs/200000000001",
-              "head_sha": "2409434594939b851a82a98737422f3e4ceef08e",
-              "output": {
-                "title": null,
-                "summary": null
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "deliver": {
-        "event": "pull_request",
-        "action": "synchronize"
       }
     }
   ]
