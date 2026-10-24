@@ -6,7 +6,7 @@ metadata:
   name: lumenfx-bot
   namespace: lumenfx-bot
 data:
-  LUMENFX_DRY_RUN: "1"
+  LUMENFX_DRY_RUN: "0"
   GITHUB_APP_SLUG: lumenfx-bot
   PUBLIC_URL: https://hook.lumenfx.dev
   WORKERS: "4"
